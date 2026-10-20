@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "客服履约事实与草稿复核",
+    "subtitle": "个人二次开发；独立演示与可选CRM输入口",
+    "output": "portfolio-fulfillment.html",
+    "quality_profile": "standard"
+  },
+  "lanes": [
+    {
+      "id": "facts",
+      "label": "运营事实"
+    },
+    {
+      "id": "policy",
+      "label": "校验与运行"
+    },
+    {
+      "id": "review",
+      "label": "人工复核"
+    }
+  ],
+  "mainPath": [
+    "supply",
+    "assess",
+    "runtime",
+    "draft",
+    "human"
+  ],
+  "nodes": [
+    {
+      "id": "supply",
+      "lane": "facts",
+      "col": 0,
+      "type": "service",
+      "label": "第二项目Java只读HTTP"
+    },
+    {
+      "id": "assess",
+      "lane": "policy",
+      "col": 1,
+      "type": "service",
+      "label": "assessOperationalEvidence"
+    },
+    {
+      "id": "runtime",
+      "lane": "policy",
+      "col": 2,
+      "type": "service",
+      "label": "实际CRM Pi适配器 / Faux"
+    },
+    {
+      "id": "draft",
+      "lane": "review",
+      "col": 3,
+      "type": "service",
+      "label": "客户草稿与缺失事项"
+    },
+    {
+      "id": "human",
+      "lane": "review",
+      "col": 4,
+      "type": "service",
+      "label": "本机人工复核 / 不发送"
+    },
+    {
+      "id": "preview",
+      "lane": "policy",
+      "col": 3,
+      "type": "service",
+      "label": "现有CRM可选preview输入"
+    }
+  ],
+  "edges": [
+    {
+      "from": "supply",
+      "to": "assess",
+      "label": "固定路径 / reader身份"
+    },
+    {
+      "from": "assess",
+      "to": "runtime",
+      "label": "结构化工具观察"
+    },
+    {
+      "from": "runtime",
+      "to": "draft",
+      "label": "脚本按观察起草"
+    },
+    {
+      "from": "draft",
+      "to": "human",
+      "label": "核对日期与未知事项"
+    },
+    {
+      "from": "assess",
+      "to": "preview",
+      "label": "可选服务端opening"
+    },
+    {
+      "from": "human",
+      "to": "supply",
+      "label": "资料不足时重新核对 / 手动触发"
+    },
+    {
+      "from": "preview",
+      "to": "draft",
+      "label": "现有预览候选草稿（仅使用可选输入时）"
+    }
+  ]
+}

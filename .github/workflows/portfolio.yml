@@ -1,0 +1,41 @@
+name: Portfolio verification
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:59999
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: synthetic-test-anon
+      SUPABASE_SERVICE_ROLE_KEY: synthetic-test-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck && pnpm portfolio:typecheck
+      - run: pnpm lint
+      - run: pnpm lint:channels && pnpm lint:role-rank
+      - name: Entire unit suite, including co-located tests
+        run: |
+          mkdir -p output/portfolio
+          set +e
+          pnpm test:unit > output/portfolio/full-unit.log 2>&1
+          code=$?
+          tail -n 60 output/portfolio/full-unit.log
+          exit "$code"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: portfolio-verification
+          path: output/portfolio/

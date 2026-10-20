@@ -1,3 +1,4 @@
+import type { OperationalEvidence } from "@/lib/ai/fulfillment/evidence";
 import { randomUUID } from "node:crypto";
 import type pg from "pg";
 import { z } from "zod";
@@ -35,6 +36,7 @@ export async function generateReplyDraft(
     channelId: string;
     boundary?: ServiceBoundary;
     agent?: PublishedAgentConfig;
+    operationalEvidence?: OperationalEvidence;
   },
 ) {
   const agent =
@@ -100,6 +102,7 @@ export async function generateReplyDraft(
         contactId: input.contactId,
         channelId: input.channelId,
         result,
+        operationalEvidence: input.operationalEvidence,
       });
       const body = result.candidates.map((c) => c.body).join("\n\n");
       const { rows: finished } = await pool.query(

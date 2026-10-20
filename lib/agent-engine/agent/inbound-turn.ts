@@ -1,3 +1,4 @@
+import { appendOperationalEvidence } from "./operational-opening";
 import { prospectingConversationContext } from "@/lib/prospecting/context";
 import { setExecutionAgentOperation } from "@/lib/atendimento/fronteira-server";
 import { DEFAULT_CHANNEL_PROVIDER } from "@/lib/channels/capabilities";
@@ -2863,14 +2864,18 @@ export async function runAgentPreview(
         entregues,
         compromissosBlock,
       }) =>
-        buildOpeningMessage(
-          previous,
-          leadState,
-          context,
-          notesIndexBlock,
-          projeta,
-          entregues,
-          compromissosBlock,
+        appendOperationalEvidence(
+          buildOpeningMessage(
+            previous,
+            leadState,
+            context,
+            notesIndexBlock,
+            projeta,
+            entregues,
+            compromissosBlock,
+          ),
+          preview.organizationId,
+          preview.operationalEvidence,
         ),
     },
     preview,

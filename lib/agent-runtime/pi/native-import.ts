@@ -16,6 +16,9 @@ export function importNativeEsm<T>(specifier: string): Promise<T> {
 export function isTsxWorker(): boolean {
   return (
     typeof process !== "undefined" &&
-    process.argv.some((argument) => argument.includes("/tsx/") || argument.endsWith("/tsx"))
+    [...process.argv, ...process.execArgv].some((argument) => {
+      const path = argument.replaceAll("\\", "/");
+      return path.includes("/tsx/") || path.endsWith("/tsx");
+    })
   );
 }

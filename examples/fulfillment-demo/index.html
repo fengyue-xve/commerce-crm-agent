@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>电商客服 · 履约说明复核</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body><header><div><span class="eyebrow">电商客户运营 · 个人二次开发</span><h1>先核对事实，再回复客户</h1></div><span class="badge">独立本地演示</span></header>
+<main><p class="boundary">实际读取供应链服务，复用 CRM 的 Pi 运行适配器。提供器为离线 Faux 脚本；没有启动完整 CRM、客户发送或真实模型服务。</p>
+<section class="intro"><div><h2>客户在问：“现在能发货吗？”</h2><p>库存数字、采购确认与准备表单各说明了什么？先识别资料缺口，再起草有依据的客户说明。</p></div><ol><li>读取库存与准备事实</li><li>检查日期与商品范围</li><li>起草说明并人工复核</li></ol></section>
+<section class="controls"><label>核对商品<select id="sku"><option value="AUD-001">AUD-001 · 已有采购与准备案例</option><option value="DEM-001">DEM-001 · 独立补货样品</option></select></label><label>时间口径<select id="mode"><option value="current_check">以今天核对资料时效</option><option value="historical_replay">固定业务日回放 · 2026-09-03</option></select></label><button id="generate">核对并起草</button></section>
+<p id="error" role="alert" hidden></p><p id="progress" role="status" aria-live="polite"></p>
+<div id="result" hidden><section class="run-meta"><span id="status"></span><span id="asof"></span><span id="received"></span></section><div class="columns"><section class="card"><h2>已核对的事实</h2><p id="source"></p><dl id="facts"></dl><h3>仍需核实</h3><ul id="unknowns"></ul><h3>校验提示</h3><ul id="reasons"></ul><h3>负责人下一步</h3><ul id="next"></ul></section>
+<section class="card"><h2>客户说明草稿</h2><p class="muted">脚本按真实工具观察组装，只证明链路与规则执行；不是模型回答质量评测。</p><pre id="draft"></pre><div class="review"><label><input id="checked" type="checkbox">我已核对日期、商品范围和未确认事项</label><button id="review" disabled>标记人工复核 · 不发送</button><p id="review-status" role="status">尚未发送，也未写入完整 CRM。</p></div><details><summary>查看本次实际执行</summary><h3>HTTP 读取</h3><pre id="requests"></pre><h3>Pi 事件</h3><ol id="events"></ol></details></section></div></div>
+<footer>采购确认 ≠ 到货入库；外箱唛有值 ≠ 已发货；同 SKU ≠ 客户订单关联。原始 CRM 归属上游作者，个人改动见仓库 MY_CHANGES.md。</footer></main></body></html>

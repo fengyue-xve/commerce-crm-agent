@@ -42,7 +42,10 @@
     "gov:verify": "pnpm typecheck && pnpm lint && pnpm lint:channels && pnpm lint:role-rank && pnpm test:unit",
     "worker": "tsx --env-file=.env --env-file=.env.local workers/agent-worker/main.ts",
     "dev:crons": "tsx --env-file=.env --env-file=.env.local scripts/dev-crons.ts",
-    "flywheel:judge": "tsx --env-file=.env --env-file=.env.local scripts/flywheel-judge-live.ts"
+    "flywheel:judge": "tsx --env-file=.env --env-file=.env.local scripts/flywheel-judge-live.ts",
+    "portfolio:demo": "tsx scripts/portfolio/server.mts",
+    "portfolio:test": "vitest run lib/ai/fulfillment lib/agent-engine/agent/operational-opening.test.ts lib/agent-runtime/pi/native-import.test.ts lib/agent-runtime/pi/runtime.test.ts lib/agent-runtime/pi/resumed-workbench-turn.test.ts",
+    "portfolio:typecheck": "tsc --noEmit -p tsconfig.portfolio.json"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.16",

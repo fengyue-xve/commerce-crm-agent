@@ -1,0 +1,10 @@
+{
+  "port": 15273,
+  "organizationId": "demo-commerce-org",
+  "supply": {
+    "baseUrl": "http://127.0.0.1:18180",
+    "username": "viewer",
+    "password": "viewer123",
+    "recordBySku": { "AUD-001": "R-1001", "CHG-001": "R-1002" }
+  }
+}

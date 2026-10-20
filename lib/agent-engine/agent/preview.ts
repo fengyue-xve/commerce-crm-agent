@@ -1,3 +1,4 @@
+import type { OperationalEvidence } from "@/lib/ai/fulfillment/evidence";
 /** Preview is an execution policy of the real turn, never a simulated queue job. */
 import type pg from "pg";
 import { hasOpenCaseForContact } from "./human-cases";
@@ -40,6 +41,8 @@ export interface TurnPreview {
   previous?: LeadCheckpointRow | null;
   notes?: Array<{ headline: string; body: string }>;
   feedback?: string;
+  /** Optional server-provided facts. No shipment authority or direct customer send is granted. */
+  operationalEvidence?: OperationalEvidence;
   /** Null means a scenario, never a synthetic identifier passed to SQL. */
   contactId: string | null;
   channelId: string | null;

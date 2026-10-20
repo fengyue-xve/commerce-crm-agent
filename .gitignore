@@ -191,3 +191,6 @@ __pycache__/
 # Session notes belong in docs/handoffs/, not the repository root.
 /HANDOFF*.md
 /RELATORIO-*.md
+
+# Personal fulfillment demo: synthetic authored source is tracked, local state is not.
+examples/fulfillment-demo/config.local.json

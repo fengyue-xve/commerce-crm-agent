@@ -8,7 +8,7 @@ function sourceFilesIn(directory: string): string[] {
     if (entry.name === "node_modules" || entry.name === ".next" || entry.name === ".git") return [];
     const path = join(directory, entry.name);
     if (entry.isDirectory()) return sourceFilesIn(path);
-    return /\.tsx?$/.test(entry.name) ? [path.slice(ROOT.length + 1)] : [];
+    return /\.tsx?$/.test(entry.name) ? [path.slice(ROOT.length + 1).replaceAll("\\", "/")] : [];
   });
 }
 
