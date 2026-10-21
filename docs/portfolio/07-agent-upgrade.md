@@ -50,7 +50,7 @@ node scripts/portfolio/browser-smoke.mjs
 python scripts/portfolio/persistence-smoke.py
 ```
 
-履约相关150通过/1跳过（包含原82项）、Pi架构17通过；真实页面16项；跨进程重启持久化7组检查。后两项要求供应链18180已启动，且使用Faux。脚本会修改独立合成演示数据。全量上游Windows测试另外审计，不用定向通过替代全仓通过。当前全量状态见 `04-verification.md`。
+履约相关153通过/1跳过（包含原82项）、Pi架构17通过；真实页面16项；跨进程重启持久化7组检查。后两项要求供应链18180已启动，且使用Faux。脚本会修改独立合成演示数据。全量上游Windows测试另外审计，不用定向通过替代全仓通过。当前全量状态见 `04-verification.md`。
 
 ## Living System Checklist
 
@@ -64,3 +64,5 @@ python scripts/portfolio/persistence-smoke.py
 8. 连续性：模型交付事实与提案，人执行/拒绝/补偿后可重新核验生成下一版；不宣称模型在线学习。
 9. 回路：输出违规触发有原因的重写，持续失败安全降级；版本冲突拒绝覆盖，补偿保留审计。
 10. 地图：`docs/architecture/portfolio-fulfillment.architecture.json` 包含输出护栏、持久提案和人工补偿的输入与返回边。
+
+补充负向对照：`库存-18件`、`stock -18 units`、`库存−18件` 在修复前均误通过，新增3项回归复现后保留符号比较，修复后全部拒绝。

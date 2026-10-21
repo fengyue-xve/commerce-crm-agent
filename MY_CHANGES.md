@@ -6,7 +6,7 @@
 
 ## AI Agent升级补充
 
-新增 `agent-config.ts`、`agent.ts`、`output-guardrail.ts`、`proposal-store.ts`，提供真实/Faux多步编排、结构化输出校验、最多两轮纠错、持久化四级提案与版本补偿。实际Pi兼容HTTP、浏览器和跨进程重启均已验证；没有真实外部Key，模型质量尚未实测。最新履约回归150通过/1跳过，保留原82项。完整实现与边界见 [升级说明](docs/portfolio/07-agent-upgrade.md)。
+新增 `agent-config.ts`、`agent.ts`、`output-guardrail.ts`、`proposal-store.ts`，提供真实/Faux多步编排、结构化输出校验、最多两轮纠错、持久化四级提案与版本补偿。实际Pi兼容HTTP、浏览器和跨进程重启均已验证；没有真实外部Key，模型质量尚未实测。最新履约回归153通过/1跳过，保留原82项。完整实现与边界见 [升级说明](docs/portfolio/07-agent-upgrade.md)。
 
 ## 首轮文件与背景
 

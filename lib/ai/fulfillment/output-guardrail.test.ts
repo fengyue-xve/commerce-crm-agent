@@ -12,7 +12,7 @@ describe("customer output guardrail", () => {
   it.each(["保证明天发货", "明天发货", "已经发货", "预计今天发货", "We will ship tomorrow", "不能承诺，但是明天发货", "不能承诺，但已经发货", "周五发货", "48小时内出库", "可发18件", "已经出库"])("blocks shipping assertion %s", (reply) => {
     expect(guardCustomerOutput({ reply, claims: [] }, report).violations).toContain("shipment_promise_forbidden");
   });
-  it.each(["库存999件", "库存为999", "stock 999 units", "库存十九件"])("blocks invented quantity %s", (reply) => {
+  it.each(["库存999件", "库存为999", "stock 999 units", "库存十九件", "库存-18件", "stock -18 units", "库存−18件"])("blocks invented quantity %s", (reply) => {
     expect(guardCustomerOutput({ reply, claims: [{ kind: "stock", quantity: 18 }] }, report).ok).toBe(false);
   });
   it("does not treat a disclaimer as a shipping assertion", () => {
