@@ -25,7 +25,9 @@
     "supply",
     "assess",
     "runtime",
+    "guard",
     "draft",
+    "proposals",
     "human"
   ],
   "nodes": [
@@ -48,21 +50,21 @@
       "lane": "policy",
       "col": 2,
       "type": "service",
-      "label": "实际CRM Pi适配器 / Faux"
+      "label": "Pi最多5轮 / Faux或真实API"
     },
     {
       "id": "draft",
       "lane": "review",
-      "col": 3,
+      "col": 4,
       "type": "service",
       "label": "客户草稿与缺失事项"
     },
     {
       "id": "human",
       "lane": "review",
-      "col": 4,
+      "col": 6,
       "type": "service",
-      "label": "本机人工复核 / 不发送"
+      "label": "人工复核 / 执行 / 补偿 / 核准但不发送"
     },
     {
       "id": "preview",
@@ -70,6 +72,20 @@
       "col": 3,
       "type": "service",
       "label": "现有CRM可选preview输入"
+    },
+    {
+      "id": "guard",
+      "lane": "policy",
+      "col": 3,
+      "type": "service",
+      "label": "输出护栏 / 最多2轮纠错 / 安全降级"
+    },
+    {
+      "id": "proposals",
+      "lane": "review",
+      "col": 5,
+      "type": "service",
+      "label": "JSON提案与版本快照 / 审计"
     }
   ],
   "edges": [
@@ -82,16 +98,6 @@
       "from": "assess",
       "to": "runtime",
       "label": "结构化工具观察"
-    },
-    {
-      "from": "runtime",
-      "to": "draft",
-      "label": "脚本按观察起草"
-    },
-    {
-      "from": "draft",
-      "to": "human",
-      "label": "核对日期与未知事项"
     },
     {
       "from": "assess",
@@ -107,6 +113,41 @@
       "from": "preview",
       "to": "draft",
       "label": "现有预览候选草稿（仅使用可选输入时）"
+    },
+    {
+      "from": "runtime",
+      "to": "guard",
+      "label": "结构化回复草稿"
+    },
+    {
+      "from": "guard",
+      "to": "runtime",
+      "label": "具体违规反馈 / 无工具重写"
+    },
+    {
+      "from": "guard",
+      "to": "draft",
+      "label": "通过或确定性安全稿"
+    },
+    {
+      "from": "draft",
+      "to": "proposals",
+      "label": "循环外入库 / generation检查"
+    },
+    {
+      "from": "proposals",
+      "to": "human",
+      "label": "待批准及可撤销动作"
+    },
+    {
+      "from": "human",
+      "to": "proposals",
+      "label": "执行/批准/拒绝/反向写回"
+    },
+    {
+      "from": "proposals",
+      "to": "runtime",
+      "label": "人工重新核验 / 新版提案"
     }
   ]
 }

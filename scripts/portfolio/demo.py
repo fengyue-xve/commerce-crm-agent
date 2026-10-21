@@ -43,7 +43,7 @@ def start():
             if proc.poll() is not None:raise RuntimeError('Demo exited; inspect output/portfolio/server.log')
             try:
                 with urllib.request.urlopen('http://127.0.0.1:15273/api/health',timeout=1) as response:
-                    if response.status==200:print('Ready: http://127.0.0.1:15273 (scripted Pi Faux; no customer sending)');return
+                    if response.status==200:print('Ready: http://127.0.0.1:15273 ; engine='+json.load(response)['provider']+' ; no customer sending');return
             except OSError:pass
             time.sleep(.2)
         raise RuntimeError('Demo readiness timed out')

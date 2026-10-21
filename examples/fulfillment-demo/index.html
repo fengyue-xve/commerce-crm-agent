@@ -107,6 +107,7 @@
         <header class="topbar">
           <div class="breadcrumb">工作台<span>/</span><strong>客服履约核验</strong></div>
           <span class="topbar-mode"><span></span>草稿模式</span>
+          <button id="reset-demo" type="button">重置演示数据</button>
         </header>
         <main id="workspace">
           <div class="page-heading">
@@ -216,7 +217,7 @@
                   <option value="current_check">以当前UTC日期核对时效</option>
                   <option value="historical_replay">固定业务日回放 · 2026-09-03</option>
                 </select></label
-              ><button id="generate">
+              ><label>买家问题<textarea id="question" maxlength="2000" rows="2">请核对能否发货，并提议更新跟进及起草买家回复。</textarea></label><button id="generate">
                 <svg
                   class="icon"
                   viewBox="0 0 24 24"
@@ -403,6 +404,16 @@
               </section>
             </div>
           </div>
+          <section class="card proposal-workbench" aria-labelledby="proposal-heading">
+            <h2 id="proposal-heading">受控提案与反向写补偿</h2>
+            <p id="engine-status" role="status">正在读取引擎配置…</p>
+            <p>读工具直接查询；商机更新需人工执行，可按版本反向写；买家回复需复核并批准，批准后仍不实际发送；不可逆动作禁用。</p>
+            <p id="guardrail-status" role="status"></p>
+            <pre id="opportunity-state"></pre>
+            <div id="proposals"></div>
+            <details><summary>已落盘草稿与审计</summary><pre id="persisted-drafts"></pre><ol id="proposal-audit"></ol></details>
+            <p id="proposal-message" role="status"></p>
+          </section>
           <details class="demo-scope" id="demo-scope">
             <summary>
               <svg
@@ -421,12 +432,10 @@
               演示范围与实现说明
             </summary>
             <p>
-              本页面使用合成数据，实际读取供应链服务，并复用 CRM 的 Pi 运行适配器。模型提供器为离线
-              Faux 脚本，草稿按真实工具观察组装；这不代表真实模型质量已验证。
+              本页面使用合成数据，实际读取供应链服务并复用 CRM Pi 适配器。默认Faux离线运行；可在服务端配置真实模型。输出违规最多重写两轮，仍不通过则返回安全草稿。
             </p>
             <p>
-              人工复核仅保存本机临时标记，不发送客户消息、不写入完整 CRM，30
-              分钟或重启后失效。采购确认不代表到货入库，外箱唛有值不代表已发货，同 SKU
+              草稿、提案、复核与补偿审计落盘保存；草稿30分钟后不可继续批准，重启后可查看记录。此独立演示不发送客户消息、不写入完整 CRM。采购确认不代表到货入库，外箱唛有值不代表已发货，同 SKU
               不代表已经关联客户订单。
             </p>
             <p>原始 CRM 归属上游作者，个人改动与模板参考见仓库 MY_CHANGES.md 及本轮界面说明。</p>

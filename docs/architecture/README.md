@@ -23,6 +23,7 @@ ser fonte sem ninguém decidir isso.
 | `agenda-google-sync.architecture.json` | fontes/destino por dono, tupla estável, três vias, claim/CAS e cobertura de calendário; presença e LGPD integradas |
 | `encerramento-atendimento.architecture.json` | conversa/demanda independentes, mutex no inbound, origem imutável dos jobs, memória vigente e guardas antes dos efeitos |
 | `agent-turn.workflow.json` | Conversador e Operador, entregas determinísticas de Meet e respostas aprovadas; revisão humana ligada ao mesmo core e à cadeia de envio. O JSON é a fonte atual; o HTML é um render anterior |
+| `portfolio-fulfillment.architecture.json` | 独立履约Agent：输入/输出护栏、多步Pi、持久提案和人工补偿，不连接正式发送 |
 | `crm-vivo.architecture.json` | subsistema **CRM Vivo** — 24 peças, 44 arestas, 6 faixas |
 | `atualizacao-self-service.architecture.json` | botão de atualizar pela UI — `agent.sh`/`update.sh` (host) ↔ rota do agente ↔ tabelas de instância ↔ rodapé/tela |
 | `gestao-funis.architecture.json` | gestão de funis pela tela do Kanban — 18 peças, 30 arestas; as três dependências do funil e por que só uma o banco defende |

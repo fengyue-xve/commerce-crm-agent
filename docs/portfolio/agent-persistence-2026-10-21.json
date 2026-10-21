@@ -1,0 +1,9 @@
+{
+  "checks_passed": 7,
+  "real_http": true,
+  "real_process_restart": true,
+  "persisted_draft_review_proposal_snapshot_audit": true,
+  "compensation_version": 3,
+  "external_approved": true,
+  "sent": false
+}

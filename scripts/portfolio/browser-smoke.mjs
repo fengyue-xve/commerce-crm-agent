@@ -7,6 +7,7 @@ const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
+page.on("dialog", (dialog) => dialog.accept());
 const report = {
   routeMocks: false,
   realSupplyHttp: true,
@@ -17,6 +18,9 @@ const report = {
 };
 try {
   await page.goto("http://127.0.0.1:15273");
+  await expect(page.locator("#opportunity-state")).toContainText("AUD-001");
+  await page.locator("#reset-demo").click();
+  await expect(page.locator("#proposal-message")).toContainText("基线已恢复");
   await expect(page.getByRole("heading", { name: "先核对事实，再回复客户" })).toBeVisible();
   const currentResponse = page.waitForResponse(
     (r) => r.url().endsWith("/api/drafts") && r.status() === 200,
@@ -52,14 +56,14 @@ try {
       : "外箱唛尚待补全",
   );
   await expect(page.locator("#draft")).toContainText("目前无法承诺具体发货日期");
-  if (replay.toolCalls.length !== 1 || replay.toolCalls[0].name !== "read_operational_evidence")
+  if (JSON.stringify(replay.toolCalls.map((row) => row.name)) !== JSON.stringify(["read_stock", "read_replenishment", "read_preparation", "propose_update_opportunity", "propose_buyer_reply"]))
     throw new Error("unexpected capability");
   if (replay.requests.some((x) => /create-purchase|confirm-po|\/apply|\/approve|send/.test(x.path)))
     throw new Error("write request issued");
   report.checks.push(
     "actual HTTP stock18 and suggestion72",
     "real shared-SKU preparation record",
-    "one actual Pi read tool",
+    "three actual Pi read tools and two proposal-only tools",
     "no write or send requests",
   );
   await expect(page.locator("#review")).toBeDisabled();
@@ -68,6 +72,17 @@ try {
   await expect(page.locator("#review-status")).toContainText("已标记人工复核");
   await expect(page.locator("#review-status")).toContainText("草稿未发送");
   report.checks.push("explicit human review, no sending");
+  if (replay.guardrail.status !== "passed") throw new Error("default multi-step draft failed guardrail");
+  const update = replay.proposals.find((row) => row.effect === "reversible_write");
+  const external = replay.proposals.find((row) => row.effect === "external");
+  if (!update || !external) throw new Error("proposals missing");
+  await page.locator(`[data-proposal="${update.id}"][data-action="execute"]`).click();
+  await expect(page.locator("#opportunity-state")).toContainText("版本 2");
+  await page.locator(`[data-proposal="${update.id}"][data-action="undo"]`).click();
+  await expect(page.locator("#opportunity-state")).toContainText("版本 3");
+  await page.locator(`[data-proposal="${external.id}"][data-action="approve"]`).click();
+  await expect(page.locator("#proposals")).toContainText("approved");
+  report.checks.push("versioned follow-up execution and compensation undo", "external proposal human-approved without sending", "durable proposal audit visible", "guardrail accepted grounded Faux draft", "baseline reset through navigation");
   await page.screenshot({ path: path.join(out, "historical-replay.png"), fullPage: true });
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: path.join(out, "desktop.png") });

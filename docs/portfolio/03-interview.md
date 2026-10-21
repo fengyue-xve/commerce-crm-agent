@@ -1,3 +1,5 @@
+> 版本说明：下文保留首轮实现记录；真实模型、持久化提案、输出护栏与补偿的当前行为以 [AI Agent升级说明](07-agent-upgrade.md) 为准。
+
 # 面试讲述与学习路线
 
 项目完成范围与个人贡献见 [MY_CHANGES.md](../../MY_CHANGES.md)，实际测试与全局门禁见 [04-verification.md](04-verification.md)。

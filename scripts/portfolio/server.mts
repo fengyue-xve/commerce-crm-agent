@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { z } from "zod";
 import { SupplyChainReader } from "../../lib/ai/fulfillment/supply-chain-reader";
-import { generateOperationalDraft, type DraftResult } from "../../lib/ai/fulfillment/draft";
+import { generateAgentDraft } from "../../lib/ai/fulfillment/agent";
+import { loadAgentConfig } from "../../lib/ai/fulfillment/agent-config";
+import { ProposalStore, ProposalConflict } from "../../lib/ai/fulfillment/proposal-store";
 
 const root = process.cwd();
 const arg = process.argv.indexOf("--config");
@@ -24,11 +26,13 @@ const config = z
   .parse(JSON.parse(await readFile(resolve(root, configPath), "utf8")));
 const reader = new SupplyChainReader({ ...config.supply, organizationId: config.organizationId });
 const origin = `http://127.0.0.1:${config.port}`;
-const drafts = new Map<string, { draft: DraftResult; createdAt: number }>();
+const agentConfig = loadAgentConfig();
+const store = new ProposalStore(resolve(root, "output/portfolio/agent-state.json"), config.organizationId);
 let active = false;
 const postSchema = z.strictObject({
   sku: z.enum(["AUD-001", "DEM-001"]),
   mode: z.enum(["current_check", "historical_replay"]),
+  question: z.string().trim().min(1).max(2000).optional(),
 });
 
 const server = createServer(async (req, res) => {
@@ -51,10 +55,15 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" && path === "/api/health") {
       json(200, {
         status: "ok",
-        provider: "official-pi-faux",
+        provider: agentConfig.engine === "faux" ? "official-pi-faux" : agentConfig.engine,
         scope: "isolated-synthetic-demo",
         sendsAvailable: false,
+        durableProposals: true,
       });
+      return;
+    }
+    if (req.method === "GET" && path === "/api/state") {
+      json(200, await store.snapshot());
       return;
     }
     const assets: Record<string, [string, string]> = {
@@ -109,16 +118,17 @@ const server = createServer(async (req, res) => {
       }
       active = true;
       try {
-        const draft = await generateOperationalDraft({
+        const before = await store.snapshot();
+        const opportunity = before.opportunities.find((row) => row.sku === parsed.data.sku)!;
+        const draft = await generateAgentDraft({
           ...parsed.data,
           organizationId: config.organizationId,
-          reader: (sku, org) => reader.read(sku, org),
+          reader: (sku, org, section) => reader.read(sku, org, [section]),
+          config: agentConfig,
         });
-        for (const [id, row] of drafts)
-          if (Date.now() - row.createdAt > 30 * 60 * 1000) drafts.delete(id);
-        if (drafts.size >= 100) drafts.delete(drafts.keys().next().value as string);
-        drafts.set(draft.id, { draft, createdAt: Date.now() });
-        json(200, draft);
+        // Persistence and every business mutation happen only after the model loop exits.
+        const proposals = await store.recordDraft(draft, opportunity.version, before.generation);
+        json(200, { ...draft, proposals, demoPersisted: true });
       } finally {
         active = false;
       }
@@ -131,21 +141,27 @@ const server = createServer(async (req, res) => {
         json(400, { error: "invalid_review" });
         return;
       }
-      const saved = drafts.get(match[1]!);
-      if (!saved || Date.now() - saved.createdAt > 30 * 60 * 1000) {
-        json(404, { error: "draft_expired" });
-        return;
-      }
-      if (saved.draft.assessment.status === "blocked") {
-        json(409, { error: "blocked_draft_cannot_be_reviewed" });
-        return;
-      }
-      saved.draft.reviewed = true;
-      json(200, { id: saved.draft.id, reviewed: true, sent: false, crmPersisted: false });
+      json(200, await store.review(match[1]!, parsed.data.revision));
+      return;
+    }
+    const proposalMatch = /^\/api\/proposals\/([0-9a-f-]{36})\/(execute|approve|undo|reject)$/.exec(path);
+    if (proposalMatch) {
+      const input = z.strictObject({ revision: z.number().int().positive() }).safeParse(body);
+      if (!input.success) { json(400, { error: "invalid_proposal_revision" }); return; }
+      if (active) { json(409, { error: "agent_run_active" }); return; }
+      json(200, await store.act(proposalMatch[1]!, input.data.revision, proposalMatch[2] as "execute" | "approve" | "undo" | "reject"));
+      return;
+    }
+    if (path === "/api/demo/reset") {
+      const input = z.strictObject({ confirmed: z.literal(true), generation: z.number().int().positive() }).safeParse(body);
+      if (!input.success) { json(400, { error: "explicit_reset_confirmation_required" }); return; }
+      if (active) { json(409, { error: "agent_run_active" }); return; }
+      json(200, await store.reset(input.data.generation));
       return;
     }
     json(404, { error: "not_found" });
   } catch (error) {
+    if (error instanceof ProposalConflict) { json(409, { error: error.code }); return; }
     // Return a bounded code, never provider context, credentials or upstream bodies.
     process.stderr.write(`Demo request failed: ${error instanceof Error ? error.name : "Error"}\n`);
     if (!res.headersSent)
@@ -158,6 +174,6 @@ const server = createServer(async (req, res) => {
 });
 server.listen(config.port, "127.0.0.1", () =>
   process.stdout.write(
-    `Isolated fulfillment demo: ${origin}; actual CRM Pi adapter + scripted Faux; no Supabase, no customer sending.\n`,
+    `Isolated fulfillment demo: ${origin}; Pi engine=${agentConfig.engine}; durable proposals; no customer sending.\n`,
   ),
 );

@@ -1300,3 +1300,15 @@ ul,
     font-size: 11px;
   }
 }
+:root { --proposal-border: #dce2ef; }
+.proposal-workbench { padding: 24px; margin: 24px 0; }
+.proposal-card { border: 1px solid var(--proposal-border); padding: 14px; margin: 12px 0; border-radius: 10px; }
+.proposal-card button { margin: 4px; }
+.proposal-workbench pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+#question { width: 100%; min-height: 70px; border: 1px solid var(--proposal-border); border-radius: 8px; padding: 8px; font: inherit; }
+
+/* Agent question spans the form rather than squeezing into an action column. */
+.control-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.control-fields > label:has(#question), .control-fields > #generate { grid-column: 1 / -1; }
+.control-fields > #generate { width: 100%; }
+@media (max-width: 640px) { .control-fields { grid-template-columns: minmax(0, 1fr); } }

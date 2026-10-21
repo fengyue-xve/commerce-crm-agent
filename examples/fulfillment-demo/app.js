@@ -1,5 +1,6 @@
 const $ = (id) => document.getElementById(id);
 let current = null;
+let persistedState = null;
 const put = (id, text) => {
   $(id).textContent = text;
 };
@@ -114,6 +115,8 @@ function display(row) {
   );
   list("next", row.assessment.nextActions);
   put("draft", row.draft);
+  put("guardrail-status", `输出护栏：${row.guardrail?.status ?? 'legacy'} · 自纠错 ${row.guardrail?.corrections ?? 0} 轮`);
+  void refreshProposals();
   put("review-status", "尚未发送，也未写入完整 CRM。");
   put(
     "requests",
@@ -137,7 +140,7 @@ $("generate").onclick = async () => {
     const response = await fetch("/api/drafts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sku: $("sku").value, mode: $("mode").value }),
+      body: JSON.stringify({ sku: $("sku").value, mode: $("mode").value, question: $("question").value }),
     });
     const row = await response.json();
     if (!response.ok) throw new Error("本次未取得草稿，请确认供应链演示服务已启动。");
@@ -171,7 +174,8 @@ $("review").onclick = async () => {
     if (!response.ok) throw new Error();
     if (current?.id !== reviewingId) return;
     syncPresentation("reviewed", current);
-    put("review-status", "已标记人工复核。草稿未发送，未写入完整 CRM；重启演示服务会清除记录。");
+    put("review-status", "已标记人工复核并落盘。草稿未发送，未写入完整 CRM；可继续核准外部动作提案。");
+    await refreshProposals();
   } catch {
     if (current?.id !== reviewingId) return;
     put("review-status", "复核状态未确认，请重新核对。没有执行发送。");
@@ -190,3 +194,74 @@ for (const id of ["sku", "mode"])
   };
 
 syncPresentation();
+
+async function postAction(path, body) {
+  const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || '操作失败');
+  return result;
+}
+async function refreshProposals() {
+  try {
+    const response = await fetch('/api/state');
+    if (!response.ok) throw new Error('读取失败');
+    const state = await response.json();
+    persistedState = state;
+    put('opportunity-state', state.opportunities.map(row => `${row.sku} · ${row.stage} · 标签 ${row.tags.join('、') || '无'} · 版本 ${row.version}`).join('\n'));
+    put('persisted-drafts', state.drafts.map(row => `${row.sku} · ${row.reviewed ? '已复核' : '待复核'} · ${row.reply}`).join('\n\n') || '暂无落盘草稿');
+    $('proposals').replaceChildren();
+    for (const proposal of state.proposals) {
+      const card = document.createElement('article');
+      card.className = 'proposal-card';
+      const description = document.createElement('p');
+      description.textContent = `${proposal.sku} · ${proposal.effect} · ${proposal.status} · 提案版本 ${proposal.revision}`;
+      card.append(description);
+      const draft = state.drafts.find(row => row.id === proposal.draftId);
+      if (draft && !draft.reviewed && proposal.effect === 'external' && proposal.status === 'pending') {
+        const review = document.createElement('button');
+        review.textContent = '已阅读上方落盘草稿，标记复核';
+        review.onclick = async () => {
+          review.disabled = true;
+          try { await postAction(`/api/drafts/${draft.id}/review`, { revision: draft.revision }); await refreshProposals(); }
+          catch (error) { put('proposal-message', error.message); review.disabled = false; }
+        };
+        card.append(review);
+      }
+      const actions = proposal.status === 'pending'
+        ? [[proposal.effect === 'reversible_write' ? 'execute' : 'approve', proposal.effect === 'reversible_write' ? '执行跟进更新' : '批准买家回复提案'], ['reject', '拒绝提案']]
+        : proposal.status === 'executed' ? [['undo', '反向写回撤销（Compensation Undo）']] : [];
+      for (const [action, title] of actions) {
+        const button = document.createElement('button');
+        button.textContent = title;
+        button.dataset.action = action; button.dataset.proposal = proposal.id;
+        button.disabled = action === 'approve' && !draft?.reviewed;
+        button.onclick = async () => {
+          button.disabled = true;
+          try {
+            await postAction(`/api/proposals/${proposal.id}/${action}`, { revision: proposal.revision });
+            put('proposal-message', action === 'undo' ? '已追加反向写并提升业务版本；原执行与快照仍保留。' : '提案状态已落盘；没有执行买家发送。');
+          } catch (error) { put('proposal-message', `操作未完成：${error.message}。请核对最新版本后重试。`); }
+          await refreshProposals();
+        };
+        card.append(button);
+      }
+      $('proposals').append(card);
+    }
+    list('proposal-audit', state.audit.slice(-30).map(row => `${row.at} · ${row.action} · ${row.target}`));
+  } catch { put('proposal-message', '落盘状态读取失败，请检查演示服务；没有执行发送。'); }
+}
+$('reset-demo').onclick = async () => {
+  if (!persistedState || !window.confirm('仅重置本机CRM合成商机、草稿与提案；保留重置审计。继续？')) return;
+  $('reset-demo').disabled = true;
+  try {
+    await postAction('/api/demo/reset', { confirmed: true, generation: persistedState.generation });
+    current = null; $('result').hidden = true; syncPresentation();
+    put('guardrail-status', ''); put('proposal-message', 'CRM演示基线已恢复，供应链数据未改动。');
+    await refreshProposals();
+  } catch (error) { put('proposal-message', error.message); }
+  finally { $('reset-demo').disabled = false; }
+};
+void fetch('/api/health').then(response => response.json()).then(health => {
+  put('engine-status', `当前引擎：${health.provider} · 本机落盘 · 外部发送关闭`);
+}).catch(() => put('engine-status', '引擎状态暂不可用'));
+void refreshProposals();

@@ -16,6 +16,7 @@ export interface ReadReceipt {
   receivedAt: string;
   requests: Array<{ method: "POST" | "GET"; path: string; status: number | null }>;
 }
+export type EvidenceSection = "stock" | "replenishment" | "preparation";
 
 /** Local synthetic service only; this is not a tenant identity mapping to a production ERP. */
 export class SupplyChainReader {
@@ -42,7 +43,7 @@ export class SupplyChainReader {
     }
   }
 
-  async read(sku: string, organizationId: string): Promise<ReadReceipt> {
+  async read(sku: string, organizationId: string, sections: readonly EvidenceSection[] = ["stock", "replenishment", "preparation"]): Promise<ReadReceipt> {
     skuSchema.parse(sku);
     if (organizationId !== this.config.organizationId) throw new Error("reader_scope_mismatch");
     const requests: ReadReceipt["requests"] = [];
@@ -146,15 +147,15 @@ export class SupplyChainReader {
     });
     const record = this.config.recordBySku?.[sku];
     const results = await Promise.allSettled([
-      call("/api/agent/tools/query-stock-level", { skus: [sku] }, token).then((x) =>
+      sections.includes("stock") ? call("/api/agent/tools/query-stock-level", { skus: [sku] }, token).then((x) =>
         stockSchema.parse(x),
-      ),
-      call(
+      ) : Promise.resolve(null),
+      sections.includes("replenishment") ? call(
         "/api/agent/tools/suggest-replenish",
         { skus: [sku], days: 7, targetCoverDays: 14 },
         token,
-      ).then((x) => replenishSchema.parse(x)),
-      record
+      ).then((x) => replenishSchema.parse(x)) : Promise.resolve(null),
+      sections.includes("preparation") && record
         ? call("/api/forms/records/" + record, undefined, token).then((x) => formSchema.parse(x))
         : Promise.resolve(null),
     ]);
@@ -163,14 +164,14 @@ export class SupplyChainReader {
     const empty = emptyEvidence(receivedAt);
     const failures: ReadReceipt["failures"] = [];
     const stock = results[0];
-    if (stock?.status === "fulfilled") {
+    if (stock?.status === "fulfilled" && stock.value) {
       const row = stock.value.data.items.find((x) => x.sku === sku);
       if (row)
         empty.stock = { sku: row.sku, quantity: row.availableQty, snapshot_date: row.snapDate };
       else failures.push("stock_unavailable");
-    } else failures.push("stock_unavailable");
+    } else if (sections.includes("stock")) failures.push("stock_unavailable");
     const replenishment = results[1];
-    if (replenishment?.status === "fulfilled") {
+    if (replenishment?.status === "fulfilled" && replenishment.value) {
       const row = replenishment.value.data.items.find((x) => x.sku === sku);
       if (row)
         empty.replenishment = {
@@ -179,7 +180,7 @@ export class SupplyChainReader {
           assessment_status: row.assessmentStatus,
         };
       else failures.push("replenishment_unavailable");
-    } else failures.push("replenishment_unavailable");
+    } else if (sections.includes("replenishment")) failures.push("replenishment_unavailable");
     const preparation = results[2];
     if (preparation?.status === "fulfilled" && preparation.value) {
       const row = preparation.value.data;
@@ -192,7 +193,7 @@ export class SupplyChainReader {
           outer_box_mark_present: Boolean(row.outer_box_mark?.value?.trim()),
         };
       else failures.push("preparation_unavailable");
-    } else failures.push("preparation_unavailable");
+    } else if (sections.includes("preparation")) failures.push("preparation_unavailable");
     const valid = operationalEvidenceSchema.safeParse(empty);
     return {
       evidence: valid.success

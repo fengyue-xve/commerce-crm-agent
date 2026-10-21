@@ -60,6 +60,11 @@ const diasDeRetencao = (nome: string, padrao: number) =>
     });
 
 const schema = z.object({
+  // Optional isolated portfolio agent. Keys remain server-only; default runs offline.
+  PORTFOLIO_LLM_ENGINE: z.enum(["faux", "openai", "deepseek", "openai-compatible"]).optional(),
+  PORTFOLIO_LLM_API_KEY: z.string().optional(),
+  PORTFOLIO_LLM_BASE_URL: z.string().optional(),
+  PORTFOLIO_LLM_MODEL: z.string().optional(),
   // Optional server-only service bindings; detailed validation fails closed per integration.
   AI_INTEGRATION_BINDINGS: z.string().optional(),
   // Node

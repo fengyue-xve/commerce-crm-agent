@@ -1,3 +1,5 @@
+> 版本说明：下文保留首轮实现记录；真实模型、持久化提案、输出护栏与补偿的当前行为以 [AI Agent升级说明](07-agent-upgrade.md) 为准。
+
 # 本轮独立场景怎么运行
 
 需要 Node>=22、项目指定pnpm9.15.9、Python3。保留原锁文件；若系统pnpm版本不同，用Corepack按packageManager选择，不要用新版重写lockfile。
