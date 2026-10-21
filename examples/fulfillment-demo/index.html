@@ -3,92 +3,439 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>电商客服 · 履约说明复核</title>
+    <meta name="theme-color" content="#111c32" />
+    <title>Commerce Desk · 客服履约核验</title>
     <link rel="stylesheet" href="/style.css" />
     <script src="/app.js" defer></script>
   </head>
   <body>
-    <header>
-      <div>
-        <span class="eyebrow">电商客户运营 · 个人二次开发</span>
-        <h1>先核对事实，再回复客户</h1>
-      </div>
-      <span class="badge">独立本地演示</span>
-    </header>
-    <main>
-      <p class="boundary">
-        实际读取供应链服务，复用 CRM 的 Pi 运行适配器。提供器为离线 Faux 脚本；没有启动完整
-        CRM、客户发送或真实模型服务。
-      </p>
-      <section class="intro">
-        <div>
-          <h2>客户在问：“现在能发货吗？”</h2>
-          <p>库存数字、采购确认与准备表单各说明了什么？先识别资料缺口，再起草有依据的客户说明。</p>
+    <a class="skip-link" href="#workspace">跳至工作台</a>
+    <div class="app-layout">
+      <aside class="sidebar" aria-label="工作台导航">
+        <a class="brand" href="#workspace"
+          ><span class="brand-symbol"
+            ><svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+              <path d="M3 8v9l9 5 9-5V8M12 13v9M7.5 5.5l9 5" /></svg></span
+          ><span><strong>Commerce Desk</strong><small>客户运营工作台</small></span></a
+        >
+        <span class="nav-caption">工作空间</span>
+        <nav>
+          <a class="nav-item active" href="#workspace" aria-current="page"
+            ><svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="3" width="7" height="7" rx="1.5" />
+              <rect x="3" y="14" width="7" height="7" rx="1.5" />
+              <rect x="14" y="14" width="7" height="7" rx="1.5" /></svg
+            ><span>履约事实核验</span><span class="nav-active-dot"></span
+          ></a>
+          <a class="nav-item" href="#workflow-guide"
+            ><svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="5" cy="5" r="2" />
+              <circle cx="19" cy="19" r="2" />
+              <path d="M5 7v10a2 2 0 0 0 2 2h10M7 5h10a2 2 0 0 1 2 2v4M16 8l3 3 3-3" /></svg
+            ><span>核对流程</span></a
+          >
+          <a class="nav-item" href="#demo-scope"
+            ><svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 11v6M12 7h.01" /></svg
+            ><span>演示说明</span></a
+          >
+        </nav>
+        <div class="sidebar-context">
+          <span class="context-label">当前工作模式</span
+          ><strong
+            ><svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" />
+              <path d="m8 12 3 3 5-6" />
+            </svg>
+            只读核验 · 人工复核</strong
+          >
+          <p>先核对可用事实，再形成有依据的客户说明。</p>
         </div>
-        <ol>
-          <li>读取库存与准备事实</li>
-          <li>检查日期与商品范围</li>
-          <li>起草说明并人工复核</li>
-        </ol>
-      </section>
-      <section class="controls">
-        <label
-          >核对商品<select id="sku">
-            <option value="AUD-001">AUD-001 · 库存与准备表单案例</option>
-            <option value="DEM-001">DEM-001 · 独立补货样品</option>
-          </select></label
-        ><label
-          >时间口径<select id="mode">
-            <option value="current_check">以当前UTC日期核对时效</option>
-            <option value="historical_replay">固定业务日回放 · 2026-09-03</option>
-          </select></label
-        ><button id="generate">核对并起草</button>
-      </section>
-      <p id="error" role="alert" hidden></p>
-      <p id="progress" role="status" aria-live="polite"></p>
-      <div id="result" hidden>
-        <section class="run-meta">
-          <span id="status"></span><span id="result-sku"></span><span id="asof"></span
-          ><span id="received"></span>
-        </section>
-        <div class="columns">
-          <section class="card">
-            <h2>已核对的事实</h2>
-            <p id="source"></p>
-            <p id="source-failures" class="muted"></p>
-            <dl id="facts"></dl>
-            <h3>仍需核实</h3>
-            <ul id="unknowns"></ul>
-            <h3>校验提示</h3>
-            <ul id="reasons"></ul>
-            <h3>负责人下一步</h3>
-            <ul id="next"></ul>
-          </section>
-          <section class="card">
-            <h2>客户说明草稿</h2>
-            <p class="muted">
-              脚本按真实工具观察组装，只证明链路与规则执行；不是模型回答质量评测。
-            </p>
-            <pre id="draft"></pre>
-            <div class="review">
-              <label><input id="checked" type="checkbox" />我已核对日期、商品范围和未确认事项</label
-              ><button id="review" disabled>标记人工复核 · 不发送</button>
-              <p id="review-status" role="status">尚未发送，也未写入完整 CRM。</p>
+        <div class="sidebar-footer">
+          <span class="environment-dot"></span>本机合成数据演示<span class="edition">CRM</span>
+        </div>
+      </aside>
+      <div class="main-shell">
+        <header class="topbar">
+          <div class="breadcrumb">工作台<span>/</span><strong>客服履约核验</strong></div>
+          <span class="topbar-mode"><span></span>草稿模式</span>
+        </header>
+        <main id="workspace">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">客户沟通 / 履约说明</p>
+              <h1>先核对事实，再回复客户</h1>
+              <p class="page-description">让每一份客户说明，都有可核对的依据与明确的下一步。</p>
             </div>
-            <details>
-              <summary>查看本次实际执行</summary>
-              <h3>HTTP 读取</h3>
-              <pre id="requests"></pre>
-              <h3>Pi 事件</h3>
-              <ol id="events"></ol>
-            </details>
+            <a class="source-link" href="http://127.0.0.1:15173" target="_blank" rel="noopener"
+              >供应链工作台
+              <svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14m-5-5 5 5-5 5" /></svg
+            ></a>
+          </div>
+          <section class="context-grid" aria-label="本次核对概览">
+            <article class="context-card">
+              <span class="context-icon purple"
+                ><svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+                  <path d="M3 8v9l9 5 9-5V8M12 13v9M7.5 5.5l9 5" /></svg
+              ></span>
+              <div>
+                <span class="context-title">核对商品</span><strong id="summary-sku">AUD-001</strong
+                ><small>库存与发货准备资料</small>
+              </div>
+            </article>
+            <article class="context-card">
+              <span class="context-icon blue"
+                ><svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" /></svg
+              ></span>
+              <div>
+                <span class="context-title">时间口径</span
+                ><strong id="summary-mode">当天核对</strong
+                ><small id="summary-time-note">按当前 UTC 日期检查时效</small>
+              </div>
+            </article>
+            <article class="context-card">
+              <span class="context-icon amber"
+                ><svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
+                  <path d="M14 3v6h6M8 13h8M8 17h5" /></svg
+              ></span>
+              <div>
+                <span class="context-title">草稿状态</span
+                ><strong id="summary-stage">等待核对</strong><small>仅生成说明，不发送客户</small>
+              </div>
+            </article>
           </section>
-        </div>
+          <section class="workflow-guide" id="workflow-guide" aria-label="核对流程">
+            <span class="guide-label">核对流程</span><span><b>01</b>读取业务事实</span><i>›</i
+            ><span><b>02</b>识别时效与缺口</span><i>›</i><span><b>03</b>起草并人工复核</span>
+          </section>
+          <section class="controls card" aria-labelledby="control-heading">
+            <div class="section-heading">
+              <div>
+                <h2 id="control-heading">开始一次履约核对</h2>
+                <p>选择商品和时间口径，核对库存与准备资料。</p>
+              </div>
+              <span class="subtle-tag">只读资料</span>
+            </div>
+            <div class="control-fields">
+              <label
+                >核对商品<select id="sku">
+                  <option value="AUD-001">AUD-001 · 库存与准备表单案例</option>
+                  <option value="DEM-001">DEM-001 · 独立补货样品</option>
+                </select></label
+              ><label
+                >时间口径<select id="mode">
+                  <option value="current_check">以当前UTC日期核对时效</option>
+                  <option value="historical_replay">固定业务日回放 · 2026-09-03</option>
+                </select></label
+              ><button id="generate">
+                <svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" />
+                  <path d="m8 12 3 3 5-6" />
+                </svg>
+                核对并起草
+                <svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14m-5-5 5 5-5 5" />
+                </svg>
+              </button>
+            </div>
+          </section>
+          <p id="error" role="alert" hidden></p>
+          <p id="progress" role="status" aria-live="polite"></p>
+          <section class="empty-state card" id="empty-state">
+            <span class="empty-symbol"
+              ><svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
+                <path d="M14 3v6h6M8 13h8M8 17h5" /></svg
+              ><span
+                ><svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" />
+                  <path d="m8 12 3 3 5-6" /></svg></span
+            ></span>
+            <h2 id="empty-title">从一次事实核对开始</h2>
+            <p id="empty-description">先选择商品并起草，核对结果和客户说明会在这里呈现。</p>
+            <div class="empty-hints">
+              <span>保留资料来源</span><span>检查数据时效</span><span>标明未知事项</span>
+            </div>
+          </section>
+          <div id="result" hidden>
+            <section class="run-meta" aria-label="本次核对结果">
+              <span id="status"></span><span id="result-sku"></span><span id="asof"></span
+              ><span id="received"></span>
+            </section>
+            <div class="columns">
+              <section class="card evidence-card" id="evidence-panel">
+                <div class="panel-heading">
+                  <span class="panel-icon"
+                    ><svg
+                      class="icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+                      <path d="M3 8v9l9 5 9-5V8M12 13v9M7.5 5.5l9 5" /></svg
+                  ></span>
+                  <div>
+                    <span class="panel-kicker">业务依据</span>
+                    <h2>已核对的事实</h2>
+                  </div>
+                </div>
+                <p id="source" class="source-note"></p>
+                <p id="source-failures" class="source-warning"></p>
+                <dl id="facts"></dl>
+                <div class="review-note">
+                  <h3>
+                    <svg
+                      class="icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 11v6M12 7h.01" />
+                    </svg>
+                    仍需核实
+                  </h3>
+                  <ul id="unknowns"></ul>
+                </div>
+                <div class="evidence-section">
+                  <h3>校验提示</h3>
+                  <ul id="reasons"></ul>
+                </div>
+                <div class="evidence-section">
+                  <h3>负责人下一步</h3>
+                  <ul id="next"></ul>
+                </div>
+              </section>
+              <section class="card draft-card" id="draft-panel">
+                <div class="panel-heading">
+                  <span class="panel-icon"
+                    ><svg
+                      class="icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
+                      <path d="M14 3v6h6M8 13h8M8 17h5" /></svg
+                  ></span>
+                  <div>
+                    <span class="panel-kicker">客户沟通</span>
+                    <h2>客户说明草稿</h2>
+                  </div>
+                  <span class="draft-tag">未发送</span>
+                </div>
+                <div class="draft-paper">
+                  <div class="paper-heading">
+                    <span class="paper-avatar">客</span>
+                    <div>
+                      <strong>关于商品发货的说明</strong
+                      ><small>依据已核对资料形成 · 草稿未发送</small>
+                    </div>
+                  </div>
+                  <pre id="draft"></pre>
+                </div>
+                <div class="review">
+                  <label
+                    ><input id="checked" type="checkbox" />我已核对日期、商品范围和未确认事项</label
+                  ><button id="review" disabled>
+                    <svg
+                      class="icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" />
+                      <path d="m8 12 3 3 5-6" />
+                    </svg>
+                    标记人工复核 · 不发送
+                  </button>
+                  <p id="review-status" role="status">尚未发送，也未写入完整 CRM。</p>
+                </div>
+                <details class="execution-details">
+                  <summary>查看本次实际执行<span>HTTP / Pi</span></summary>
+                  <h3>HTTP 读取</h3>
+                  <pre id="requests"></pre>
+                  <h3>Pi 事件</h3>
+                  <ol id="events"></ol>
+                </details>
+              </section>
+            </div>
+          </div>
+          <details class="demo-scope" id="demo-scope">
+            <summary>
+              <svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 11v6M12 7h.01" />
+              </svg>
+              演示范围与实现说明
+            </summary>
+            <p>
+              本页面使用合成数据，实际读取供应链服务，并复用 CRM 的 Pi 运行适配器。模型提供器为离线
+              Faux 脚本，草稿按真实工具观察组装；这不代表真实模型质量已验证。
+            </p>
+            <p>
+              人工复核仅保存本机临时标记，不发送客户消息、不写入完整 CRM，30
+              分钟或重启后失效。采购确认不代表到货入库，外箱唛有值不代表已发货，同 SKU
+              不代表已经关联客户订单。
+            </p>
+            <p>原始 CRM 归属上游作者，个人改动与模板参考见仓库 MY_CHANGES.md 及本轮界面说明。</p>
+          </details>
+          <footer>
+            <span>Commerce Desk · 客服履约核验</span><span>有依据的说明，留给人做决定。</span>
+          </footer>
+        </main>
       </div>
-      <footer>
-        采购确认 ≠ 到货入库；外箱唛有值 ≠ 已发货；同 SKU ≠ 客户订单关联。原始 CRM
-        归属上游作者，个人改动见仓库 MY_CHANGES.md。
-      </footer>
-    </main>
+    </div>
   </body>
 </html>

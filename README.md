@@ -44,3 +44,5 @@ python scripts/portfolio/demo.py start
 核心新代码：`lib/ai/fulfillment/`；Pi演示提供器封装在 `lib/agent-runtime/pi/tool-observation-fixture.ts`；真实CRM可选上下文入口为 `generateReplyDraft → runAgentPreview → appendOperationalEvidence`。
 
 完整平台安装、部署、数据库迁移、RLS与外部服务沿用上游说明。本轮不会把上游历史测试数量或真实模型录制标记为个人新增成果。
+
+界面布局参考与本轮视觉验收见 [界面说明](docs/portfolio/06-interface-design.md)。

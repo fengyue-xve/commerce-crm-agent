@@ -29,7 +29,34 @@ const reasonLabels = {
   outer_box_mark_missing: "外箱唛字段尚待补全",
   replenishment_missing: "缺少有效补货建议",
 };
+function syncPresentation(stage = "idle", row = null) {
+  put("summary-sku", row?.assessment.scope.sku ?? $("sku").value);
+  const replay = (row?.mode ?? $("mode").value) === "historical_replay";
+  put("summary-mode", replay ? "历史回放" : "当天核对");
+  put("summary-time-note", replay ? "固定业务日 · 2026-09-03" : "按当前 UTC 日期检查时效");
+  put(
+    "summary-stage",
+    stage === "loading"
+      ? "正在核对"
+      : stage === "reviewed"
+        ? "已标记复核"
+        : row
+          ? row.assessment.status === "blocked"
+            ? "校验未通过"
+            : "待人工复核"
+          : "等待核对",
+  );
+  $("empty-state").hidden = stage === "result" || stage === "reviewed";
+  put("empty-title", stage === "loading" ? "正在核对业务资料" : "从一次事实核对开始");
+  put(
+    "empty-description",
+    stage === "loading"
+      ? "正在读取实际业务来源，并整理事实与未知事项。"
+      : "先选择商品并起草，核对结果和客户说明会在这里呈现。",
+  );
+}
 function display(row) {
+  syncPresentation("result", row);
   current = row;
   $("result").hidden = false;
   $("checked").checked = false;
@@ -104,7 +131,8 @@ $("generate").onclick = async () => {
   $("result").hidden = true;
   $("error").hidden = true;
   current = null;
-  put("progress", "正在读取业务事实并运行 Pi 工具循环…");
+  syncPresentation("loading");
+  put("progress", "正在读取业务事实并核对资料…");
   try {
     const response = await fetch("/api/drafts", {
       method: "POST",
@@ -116,6 +144,7 @@ $("generate").onclick = async () => {
     display(row);
     put("progress", "核对与草稿已完成。请继续检查未知事项。");
   } catch (error) {
+    syncPresentation();
     put("error", error.message);
     $("error").hidden = false;
     put("progress", "本次未完成；没有执行客户发送。");
@@ -141,6 +170,7 @@ $("review").onclick = async () => {
     });
     if (!response.ok) throw new Error();
     if (current?.id !== reviewingId) return;
+    syncPresentation("reviewed", current);
     put("review-status", "已标记人工复核。草稿未发送，未写入完整 CRM；重启演示服务会清除记录。");
   } catch {
     if (current?.id !== reviewingId) return;
@@ -152,8 +182,11 @@ $("review").onclick = async () => {
 for (const id of ["sku", "mode"])
   $(id).onchange = () => {
     current = null;
+    syncPresentation();
     $("result").hidden = true;
     $("checked").checked = false;
     $("review").disabled = true;
     put("progress", "核对条件已变更，请重新读取事实并起草。");
   };
+
+syncPresentation();
