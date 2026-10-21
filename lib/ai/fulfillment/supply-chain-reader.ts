@@ -69,8 +69,7 @@ export class SupplyChainReader {
       if (text.length > 262144) throw new Error("supply_response_too_large");
       return JSON.parse(text) as unknown;
     };
-    const receivedAt = new Date().toISOString();
-    const empty: OperationalEvidence = operationalEvidenceSchema.parse({
+    const emptyEvidence = (receivedAt: string): OperationalEvidence => operationalEvidenceSchema.parse({
       schema_version: 1,
       organization_id: organizationId,
       sku,
@@ -93,8 +92,9 @@ export class SupplyChainReader {
         );
       token = login.data.token;
     } catch {
+      const receivedAt = new Date().toISOString();
       return {
-        evidence: empty,
+        evidence: emptyEvidence(receivedAt),
         receivedAt,
         requests,
         failures: ["stock_unavailable", "replenishment_unavailable", "preparation_unavailable"],
@@ -158,6 +158,9 @@ export class SupplyChainReader {
         ? call("/api/forms/records/" + record, undefined, token).then((x) => formSchema.parse(x))
         : Promise.resolve(null),
     ]);
+    // Stamp collection after every HTTP response has settled, including partial failures.
+    const receivedAt = new Date().toISOString();
+    const empty = emptyEvidence(receivedAt);
     const failures: ReadReceipt["failures"] = [];
     const stock = results[0];
     if (stock?.status === "fulfilled") {

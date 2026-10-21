@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { createServer, type Server } from "node:http";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { SupplyChainReader } from "./supply-chain-reader";
 
 const ORGANIZATION = "portfolio-org";
@@ -10,11 +10,18 @@ const AUTH = "/api/auth/login";
 const STOCK = "/api/agent/tools/query-stock-level";
 const REPLENISH = "/api/agent/tools/suggest-replenish";
 const FORM = "/api/forms/records/R-1001";
-type ResponseFixture = { status?: number; value?: unknown; raw?: string; location?: string };
+type ResponseFixture = {
+  status?: number;
+  value?: unknown;
+  raw?: string;
+  location?: string;
+  beforeResponse?: () => void;
+};
 type Received = { method: string; path: string; authorization?: string; body: unknown };
 const servers: Server[] = [];
 
 afterEach(async () => {
+  vi.useRealTimers();
   await Promise.all(
     servers.splice(0).map(
       (server) =>
@@ -81,6 +88,7 @@ async function service(overrides: Record<string, ResponseFixture> = {}) {
       response.end('{"error":"unexpected-path"}');
       return;
     }
+    fixture.beforeResponse?.();
     response.writeHead(fixture.status ?? 200, {
       "Content-Type": "application/json",
       ...(fixture.location ? { Location: fixture.location } : {}),
@@ -106,8 +114,34 @@ async function service(overrides: Record<string, ResponseFixture> = {}) {
 
 describe("supply-chain read adapter against an actual local HTTP receiver", () => {
   it("authenticates the viewer and calls only the three fixed read operations", async () => {
-    const fixture = await service();
+    const startedAt = "2026-10-21T01:00:00.000Z";
+    const completedAt = "2026-10-21T01:00:09.000Z";
+    const failedAt = "2026-10-21T01:00:12.000Z";
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(startedAt));
+    // Real HTTP remains asynchronous; only the clock advances at a response boundary.
+    const fixture = await service({
+      [STOCK]: {
+        value: {
+          code: 0,
+          data: { items: [{ sku: SKU, availableQty: 18, snapDate: "2026-09-03" }] },
+        },
+        beforeResponse: () => vi.setSystemTime(new Date(completedAt)),
+      },
+    });
     const receipt = await fixture.reader.read(SKU, ORGANIZATION);
+    expect(receipt.receivedAt).toBe(completedAt);
+    expect(receipt.evidence.collected_at).toBe(completedAt);
+    const denied = await service({
+      [AUTH]: {
+        status: 401,
+        value: { error: "denied" },
+        beforeResponse: () => vi.setSystemTime(new Date(failedAt)),
+      },
+    });
+    const failedReceipt = await denied.reader.read(SKU, ORGANIZATION);
+    expect(failedReceipt.receivedAt).toBe(failedAt);
+    expect(failedReceipt.evidence.collected_at).toBe(failedAt);
     expect(fixture.received).toHaveLength(4);
     expect(fixture.received[0]?.path).toBe(AUTH);
     expect(fixture.received.map(({ method, path }) => ({ method, path }))).toEqual(
