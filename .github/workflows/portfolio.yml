@@ -15,14 +15,15 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: synthetic-test-service
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/preparar-node
+        name: Prepare the pinned Node and pnpm environment
+        timeout-minutes: 5
+      - name: Install source-scan dependency
+        timeout-minutes: 5
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ripgrep
+          rg --version
       - run: pnpm typecheck && pnpm portfolio:typecheck
       - run: pnpm lint
       - run: pnpm lint:channels && pnpm lint:role-rank

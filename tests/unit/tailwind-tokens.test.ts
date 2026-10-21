@@ -366,7 +366,7 @@ function ocorrencias(arquivos: string[], rx: RegExp): string[] {
     // `shadow` também é um modo de avaliação do runtime, não uma classe CSS.
     // Esse contrato usa a mesma string literal que a guarda procura, mas não
     // entrega className ao browser e não deve virar falso positivo de Tailwind.
-    if (path.relative(RAIZ, f) === "lib/agent-runtime/types.ts") continue;
+    if (path.relative(RAIZ, f).split(path.sep).join("/") === "lib/agent-runtime/types.ts") continue;
     const linhas = fs.readFileSync(f, "utf8").split("\n");
     linhas.forEach((linha, i) => {
       // Prosa não é classe. `lib/ai/cost.ts` documenta "rounded up" e viraria

@@ -95,7 +95,7 @@ export async function generateOperationalDraft(input: {
         execute: async (args) => {
           if (args.sku !== input.sku) throw new Error("tool_sku_scope_mismatch");
           receipt = await input.reader(input.sku, input.organizationId);
-        if (input.mode === "current_check" && !input.now) asOf = new Date();
+          if (input.mode === "current_check" && !input.now) asOf = new Date();
           evidence =
             input.mode === "historical_replay"
               ? { ...receipt.evidence, collected_at: asOf.toISOString() }

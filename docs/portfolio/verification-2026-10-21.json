@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-21",
+  "source_baseline": "ddc07c57427105b77c21e6e67a89e986f3913882",
+  "implementation_commit": "2dcf336",
+  "scope": "synthetic operational facts, actual local HTTP and CRM Pi SDK adapter, scripted Faux provider; no customer sending",
+  "typecheck": {
+    "whole_project": "passed",
+    "portfolio_cli": "passed"
+  },
+  "lint": {
+    "whole_project_exit": 0,
+    "whole_project_warnings_at_first_run": 476,
+    "new_or_connected_files_errors": 0,
+    "new_or_connected_files_warnings": 0,
+    "channels": "passed",
+    "role_rank": "passed"
+  },
+  "production_build": {
+    "result": "passed",
+    "scope": "compile with synthetic local DB placeholder; warnings for unavailable DB do not establish DB connectivity",
+    "telemetry_disabled": true
+  },
+  "focused_tests": {
+    "passed": 127,
+    "skipped": 1,
+    "files": 8,
+    "new_cases": 82,
+    "skip": "existing live-model-key conditional test"
+  },
+  "tailwind_windows_path_recheck": {
+    "passed": 13
+  },
+  "environment_representative_recheck": {
+    "passed": 33,
+    "files": 4,
+    "conditions": "Existing Git Bash added to this test process PATH; ambient ANTHROPIC_BASE_URL removed only for test process"
+  },
+  "fresh_github_checkout": {
+    "dependency_install": "passed, original lockfile via pnpm9.15.9",
+    "portfolio_tests_passed": 110,
+    "skipped": 1
+  },
+  "browser": {
+    "checks_passed": 11,
+    "route_mocks": false,
+    "page_errors": 0,
+    "actual_supply_http": true,
+    "actual_crm_pi_adapter": true,
+    "provider": "official-pi-faux",
+    "sent": false,
+    "crm_persisted": false
+  },
+  "initial_windows_complete_run": {
+    "failed_files": 31,
+    "passed_files": 1294,
+    "failed_cases": 117,
+    "passed_cases": 12871,
+    "expected_fail": 1,
+    "skipped": 14,
+    "unhandled_errors": 1,
+    "status": "not_green",
+    "audit": "windows-full-suite-audit.json",
+    "note": "Initial diagnostic run before final edits; not a final-HEAD all-green claim"
+  },
+  "github_ci": {
+    "initial_run": {
+      "run_url": "https://github.com/fengyue-xve/commerce-crm-agent/actions/runs/39464504014",
+      "commit": "2dcf336bc1a20b2e123df8cf36d26659784aec21",
+      "conclusion": "failure",
+      "passed_files": 1325,
+      "failed_files": 4,
+      "passed_tests": 13040,
+      "failed_tests": 5,
+      "expected_fail": 1,
+      "skipped": 3,
+      "causes": [
+        "new portfolio workflow not yet registered in exact job inventory",
+        "new portfolio workflow must reuse upstream preparar-node composite action",
+        "runner missing ripgrep: branding scan fails and published-config consumers scan returns empty"
+      ]
+    },
+    "final_run": {
+      "status": "awaiting_rerun_after_ci_configuration_fix"
+    }
+  },
+  "not_verified": [
+    "full CRM deployment and Supabase/Auth/RLS DB invariants",
+    "new native CRM UI import flow",
+    "customer channels and sending",
+    "real model quality/cost",
+    "real Mem0/WeKnora/Langfuse integration"
+  ],
+  "final_combined_focused_tests": {
+    "files": 9,
+    "passed": 140,
+    "skipped": 1
+  }
+}

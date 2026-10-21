@@ -21,7 +21,7 @@
 
 ## 具体执行与验证范围
 
-本轮定向回归分别覆盖纯校验 42 项、reader 20 项、草稿 13 项、opening 4 项及原生加载边界 3 项。实际跨项目 HTTP 已读取第二项目的合成数据，浏览器场景 10 项未使用请求 mock、无 pageerror；详细命令、版本、日志和最终结果见 [验证记录](docs/portfolio/04-verification.md)。既有 runtime 恢复测试的复核另列，不计作本轮新功能测试。全局 typecheck、lint、build 和全量测试的状态也以该记录为准。
+本轮定向回归分别覆盖纯校验 42 项、reader 20 项、草稿 13 项、opening 4 项及原生加载边界 3 项。实际跨项目 HTTP 已读取第二项目的合成数据，浏览器场景 11 项未使用请求 mock、无 pageerror；详细命令、版本、日志和最终结果见 [验证记录](docs/portfolio/04-verification.md)。既有 runtime 恢复测试的复核另列，不计作本轮新功能测试。全局 typecheck、lint、build 和全量测试的状态也以该记录为准。
 
 独立演示使用官方 Faux provider。`current_check` 按当前日期核对上游固定快照，过期库存不作为当前有效量展示；`historical_replay` 以 2026-09-03 为业务核对日，仍实际发 HTTP 请求，展示 `AUD-001` 的历史库存 18、补货参考 72 及 `R-1001`。合成 SKU `DEM-001` 可读到历史库存 5。HTTP 取得时间与业务核对日分别显示，历史评估不伪装成当天库存。
 

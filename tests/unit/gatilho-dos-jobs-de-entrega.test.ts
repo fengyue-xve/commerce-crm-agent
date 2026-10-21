@@ -145,6 +145,14 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
       "protection lê como satisfeito.",
   },
 
+  // A verificação do fork mantém a suíte inteira e os gates estáticos ativos.
+  "portfolio.yml::verify": {
+    condicao: null,
+    efeito:
+      "Este job verifica a contribuição do portfólio e a suíte unitária inteira no fork. " +
+      "Desligá-lo deixaria o código publicado sem essa verificação.",
+  },
+
   // --- os outros checks obrigatórios ------------------------------------------
   // Mesmo mecanismo, mesmo desfecho: `skipped` conta como check satisfeito.
   // Desligar qualquer um destes faz o PR entrar sem ter sido testado.
