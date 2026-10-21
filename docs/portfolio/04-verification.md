@@ -40,6 +40,18 @@ Windows完整单测包含上游Bash/发布/安装及路径检查，与本轮履�
 
 完整失败逐文件分类见 [Windows诊断](windows-full-suite-audit.json)。已确认Bash/grep、路径、字体、启动器、locale和进程SDK变量等差异；Git全树扫描超时尚未归因。原失败测试和受检运行时类型与上游快照相同，但这不自动证明所有失败都与环境有关。没有把该轮非最终状态的全量执行包装成最终全绿。
 
-可机读摘要：[verification-2026-10-21.json](verification-2026-10-21.json)。Linux首次全量CI：[运行39464504014](https://github.com/fengyue-xve/commerce-crm-agent/actions/runs/39464504014) 为失败：1325文件、13040例通过；4文件、5例失败，另1 expected fail和3跳过。已定位新增工作流未登记精确job清单、未复用上游Node准备action，以及runner缺少ripgrep导致两份扫描测试失败。保留原测试约束，修正配置后重新全量运行；最终结果补入此处及摘要，不能用Dependabot检查成功代替。
+可机读摘要：[verification-2026-10-21.json](verification-2026-10-21.json)。Linux首次全量CI：[运行39464504014](https://github.com/fengyue-xve/commerce-crm-agent/actions/runs/39464504014) 为失败：1325文件、13040例通过；4文件、5例失败，另1 expected fail和3跳过。已定位新增工作流未登记精确job清单、未复用上游Node准备action，以及runner缺少ripgrep导致两份扫描测试失败。保留原测试约束并修正配置，复验结果如下；没有用Dependabot检查成功代替。
 
 最终合并定向回归包含Windows CSS路径修复：**9文件140通过、1个真实模型条件用例跳过**。这是专项与相关上游边界检查，不是全量测试计数。工程约束与具体消费者见 [05-engineering-checklist.md](05-engineering-checklist.md)。
+
+## 最终 Linux 全量复验
+
+[运行39535828073](https://github.com/fengyue-xve/commerce-crm-agent/actions/runs/39535828073) 在代码提交 `4aca380` 上实际成功：**1329文件通过，13046例通过、1 expected fail、3跳过，0失败**。同一运行的全局/CLI类型检查、完整lint、渠道与角色门禁均通过。完整日志作为该运行的 `portfolio-verification` artifact 保留。
+
+本次没有跳过失败测试：复用上游Node准备action、在runner安装ripgrep，并将新增job登记到精确清单。相关四文件定向74例也通过。上述是Linux完整单测结论，不改写先前Windows诊断，也不涵盖数据库不变量或完整CRM端到端。
+
+服务重启后再次通过真实浏览器11项。发现并修正浏览器脚本对前次外箱唛写入状态的依赖：按本次HTTP读到的准备字段验证对应说明，同时始终要求草稿不能承诺具体发货日。没有为了演示预先回填上游表单。公开截图已更新为该重启状态。
+
+采集回执的 `receivedAt` 和 `collected_at` 已统一为HTTP响应读取完成时间；登录失败回执也在失败响应完成后取时。强化现有真实HTTP测试，用响应边界推进时钟验证；旧逻辑的负向对照按预期失败，修复后reader/草稿33例及最终合并140例通过，测试数没有增加。历史回放仍单列真实接收时间与固定评估日。
+
+最终记录文档在上述代码提交之后单独同步；测试归属于这个明确的代码提交，不将文档更新虚构为第二次全量执行。

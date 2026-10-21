@@ -38,7 +38,8 @@
   "fresh_github_checkout": {
     "dependency_install": "passed, original lockfile via pnpm9.15.9",
     "portfolio_tests_passed": 110,
-    "skipped": 1
+    "skipped": 1,
+    "commit": "2dcf336bc1a20b2e123df8cf36d26659784aec21"
   },
   "browser": {
     "checks_passed": 11,
@@ -48,7 +49,8 @@
     "actual_crm_pi_adapter": true,
     "provider": "official-pi-faux",
     "sent": false,
-    "crm_persisted": false
+    "crm_persisted": false,
+    "clean_service_restart_recheck": "11 passed; preparation state asserted from current HTTP observation, not a previous write"
   },
   "initial_windows_complete_run": {
     "failed_files": 31,
@@ -80,7 +82,17 @@
       ]
     },
     "final_run": {
-      "status": "awaiting_rerun_after_ci_configuration_fix"
+      "run_url": "https://github.com/fengyue-xve/commerce-crm-agent/actions/runs/39535828073",
+      "commit": "4aca3804733e85b3e7507151640063ef20d4cd91",
+      "conclusion": "success",
+      "platform": "GitHub ubuntu-latest, Node22, pnpm9.15.9",
+      "scope": "whole and CLI typecheck, whole lint, channel/role gates and entire unit suite; no DB/E2E/live model claim",
+      "passed_files": 1329,
+      "passed_tests": 13046,
+      "expected_fail": 1,
+      "skipped": 3,
+      "total_tests": 13050,
+      "failed_tests": 0
     }
   },
   "not_verified": [
@@ -94,5 +106,7 @@
     "files": 9,
     "passed": 140,
     "skipped": 1
-  }
+  },
+  "final_code_commit": "4aca3804733e85b3e7507151640063ef20d4cd91",
+  "http_collection_clock": "receivedAt and collected_at record response collection completion on success and authentication failure; strengthened existing real-HTTP test and negative control passed"
 }
