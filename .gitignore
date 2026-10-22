@@ -194,3 +194,11 @@ __pycache__/
 
 # Personal fulfillment demo: synthetic authored source is tracked, local state is not.
 examples/fulfillment-demo/config.local.json
+
+# Portfolio working papers and learning notes stay local and are never published.
+/docs/internal/
+
+# Release fragments are maintained by the upstream release workflow; this fork
+# keeps only the directory marker required by the release checks.
+.changes/*
+!.changes/.gitkeep

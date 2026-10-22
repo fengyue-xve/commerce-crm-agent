@@ -4,6 +4,8 @@
 
 自托管、多租户、Agent 原生的电商运营 CRM 平台。系统把供应链只读事实、买家问题、履约核验、客户跟进和人工提案串成闭环。
 
+This repository is a derivative work based on [Upstream](https://github.com/helsome/AiNativeCrm) (MIT). Original copyright notices are retained. The fulfillment verification agent module under `lib/ai/fulfillment` is independently implemented/extended for this portfolio.
+
 ~~~mermaid
 flowchart LR
   S[供应链只读事实] --> E[Evidence Zod + Freshness]
@@ -24,6 +26,8 @@ flowchart LR
 - 输出侧核对库存数值、单位和发货承诺；违规原因反馈给模型，最多执行 2 轮 Self-Correction，失败时返回确定性安全草稿。
 - 工具分为 read、reversible_write、external、irreversible 四级。可逆写记录版本快照并支持 Compensation Undo；external 动作生成 canSend=false 的待批准提案。
 - ProposalStore 使用文件锁、fsync、原子替换和 generation 版本持久化提案与审计记录，多租户数据通过 PostgreSQL Schema/RLS 隔离。
+- `evidence.ts`、`supply-chain-reader.ts`、`draft.ts` 和 `operational-opening.ts` 共同建立跨系统观察边界；`output-guardrail.ts` 与 `proposal-store.ts` 将事实校验和执行权留在循环外。
+- 履约模块包含 153 项回归断言，并在 CI 中复放全新安装与增量更新的真实 Postgres 容器基线。
 
 ## 3. 工作台界面截图
 
@@ -38,8 +42,11 @@ flowchart LR
 | 履约 Agent | [lib/ai/fulfillment/agent.ts](lib/ai/fulfillment/agent.ts) |
 | Agent 配置 | [lib/ai/fulfillment/agent-config.ts](lib/ai/fulfillment/agent-config.ts) |
 | Evidence 护栏 | [lib/ai/fulfillment/evidence.ts](lib/ai/fulfillment/evidence.ts) |
+| Supply Chain Reader | [lib/ai/fulfillment/supply-chain-reader.ts](lib/ai/fulfillment/supply-chain-reader.ts) |
+| Deterministic Draft | [lib/ai/fulfillment/draft.ts](lib/ai/fulfillment/draft.ts) |
 | 输出护栏 | [lib/ai/fulfillment/output-guardrail.ts](lib/ai/fulfillment/output-guardrail.ts) |
 | 提案持久化 | [lib/ai/fulfillment/proposal-store.ts](lib/ai/fulfillment/proposal-store.ts) |
+| Context bridge | [lib/agent-engine/agent/operational-opening.ts](lib/agent-engine/agent/operational-opening.ts) |
 | Tool Observation | [lib/agent-runtime/pi/tool-observation-fixture.ts](lib/agent-runtime/pi/tool-observation-fixture.ts) |
 | 演示服务 | [scripts/portfolio/server.mts](scripts/portfolio/server.mts) |
 | 浏览器 smoke | [scripts/portfolio/browser-smoke.mjs](scripts/portfolio/browser-smoke.mjs) |

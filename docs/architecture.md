@@ -1,31 +1,68 @@
-# Architecture
+# Fulfillment verification architecture
+
+The CRM foundation supplies tenant isolation, auth, the Pi runtime and the
+operator UI. The portfolio extension adds a read-only fulfillment observation
+lane and a proposal executor with explicit human approval boundaries.
 
 ~~~mermaid
-flowchart TB
-  Buyer[买家问题] --> Pi[Pi 多步编排]
-  Supply[库存 / 补货 / 准备表单] --> Obs[Observation]
-  Obs --> Evidence[Zod + 7 天时效]
-  Pi --> Guard[输出事实护栏]
-  Guard --> SC[最多 2 轮 Self-Correction]
-  SC --> Draft[安全回复草稿]
-  Pi --> Proposal[ProposalStore]
-  Proposal --> Review[人工审批]
-  Review --> Exec[执行 / Compensation Undo]
-  Exec --> Audit[(Audit log)]
+flowchart LR
+  Buyer[Buyer question] --> Pi[Pi Agent loop]
+  Pi -->|read_stock / read_replenishment / read_preparation| Reader[SupplyChainReader]
+  Reader --> Evidence[Zod Evidence + scope + UTC freshness]
+  Evidence --> Obs[Observation report]
+  Obs --> Pi
+  Pi --> Candidate[Structured reply + proposed actions]
+  Candidate --> Guard[Output guardrail]
+  Guard -->|violations| Correct[Up to 2 no-tool Self-Correction rounds]
+  Correct --> Candidate
+  Guard -->|passed| Draft[Human-reviewable draft]
+  Candidate --> Store[Durable ProposalStore]
+  Store --> Review[Operator review]
+  Review -->|reversible_write| Execute[Version-checked executor]
+  Execute --> Undo[Compensation Undo]
+  Review -->|external| Approval[Explicit approval]
+  Approval --> Send[External adapter]
+  Store --> Audit[(Audit + generation)]
 ~~~
 
-## Runtime policy
+## Runtime boundaries
 
-读工具在模型循环内执行；可逆写、外部动作和不可逆动作只生成提案。循环外的执行器校验租户、版本和审批状态，模型无法直接触发外部发送。
+- `agent.ts` selects a Faux replay provider for deterministic CI or a
+  compatible OpenAI/DeepSeek provider from server-side environment variables.
+- The loop can call only read tools. Tool observations are data, never
+  instructions. The read path is scoped to one organization and SKU.
+- `evidence.ts` rejects unknown fields and mismatched organization/SKU values,
+  drops snapshots outside the seven-day UTC window, and preserves unavailable
+  sections as explicit gaps.
+- `draft.ts` provides the deterministic explanation used by replay and by the
+  final safe fallback. `operational-opening.ts` injects validated facts into a
+  user opening without changing the stable system policy.
 
-## Guardrail policy
+## Output and proposal controls
 
-Evidence 校验组织和 SKU 范围、时间窗口与部分失败缺口。Output guardrail 检查数字、单位、负号和承诺话术，违规反馈驱动无工具自纠错，超过 2 轮后降级安全草稿。
+`output-guardrail.ts` parses the model's structured reply, checks every claimed
+quantity against the valid evidence, preserves ASCII/Unicode sign semantics,
+rejects unsupported units, and blocks shipment promises when the report cannot
+confirm shipment. Concrete violation codes are fed back to the provider for at
+most two correction rounds. A failed correction falls back to the deterministic
+draft.
 
-## Proposal state
+`proposal-store.ts` persists drafts and actions using a process queue, an
+exclusive lock file, atomic replacement and `fsync`. Every reversible write
+stores the previous opportunity value and expected version. Compensation Undo
+requires the current version to match, then increments the version and records
+an audit entry. External sends remain pending with `canSend=false` until the
+operator approves them outside the model loop. Irreversible actions are not
+available to this harness.
 
-提案持久化 generation、原值快照和版本号。reversible_write 支持按当前版本撤销；external 必须人工批准后才可执行，canSend 始终由执行器控制。
+## Validation surfaces
 
-## Run and verify
+The module tests cover evidence parsing, stale and partial reads, provider
+compatibility, multi-step observations, output violations, correction fallback,
+proposal persistence, approval and compensation conflicts. The portfolio
+commands additionally run browser and persistence smoke tests. The repository's
+CI executes the 153-item fulfillment regression set together with the real
+Postgres container jobs for tenant and schema invariants.
 
-使用根目录 README 的启动命令运行 typecheck、回归、浏览器 smoke 与持久化 smoke。
+See [CORE_MODULES.md](../CORE_MODULES.md) for the upstream/extension boundary
+and the source-to-resume claim map.
