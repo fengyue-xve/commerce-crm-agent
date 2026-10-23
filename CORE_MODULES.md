@@ -39,7 +39,7 @@ can follow a claim from the README to the implementation and its tests.
 
 - Keep root `LICENSE` and all upstream copyright headers. No author or license statement is rewritten.
 - Internal audit snapshots and process notes are copied to the local `docs/internal/` working area and ignored by Git. The public tree keeps implementation, tests, architecture and run commands.
-- `.changes/.gitkeep` remains only as an empty release-check marker; release fragments and working notes are ignored.
+- The versioned empty `.changes/.gitkeep` keeps the release-check directory present; release fragments and working notes remain ignored.
 
 ## Verification map
 
