@@ -7,8 +7,8 @@
 检查数，不并入主计数。
 
 当前主计数为 **104 个静态测试调用点**：履约与护栏 69 个，操作事实桥 4 个，Pi
-runtime 31 个。仓库中此前 README 与架构文档写的 153 没有对应的逐文件统计来源，
-因此以这份可复核清单中的 104 作为当前口径。
+runtime 31 个。仓库中此前 README 与架构文档使用的旧三位数口径没有对应的逐文件
+统计来源，因此以这份可复核清单中的 104 作为当前口径。
 
 ## `portfolio:test` 文件清单
 
@@ -48,5 +48,5 @@ vitest run lib/ai/fulfillment lib/agent-engine/agent/operational-opening.test.ts
 ```
 
 `.github/workflows/portfolio.yml` 的单元步骤运行完整 `pnpm test:unit`，并不把上述
-跨进程 smoke 或 `portfolio:test` 子集重新命名为 153 项。该清单因此把主计数、
+跨进程 smoke 或 `portfolio:test` 子集重新命名为更大的总数。该清单因此把主计数、
 参数化展开和跨进程检查分别列出，避免把不同口径相加。
