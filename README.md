@@ -27,7 +27,7 @@ flowchart LR
 - 工具分为 read、reversible_write、external、irreversible 四级。可逆写记录版本快照并支持 Compensation Undo；external 动作生成 canSend=false 的待批准提案。
 - ProposalStore 使用文件锁、fsync、原子替换和 generation 版本持久化提案与审计记录，多租户数据通过 PostgreSQL Schema/RLS 隔离。
 - `evidence.ts`、`supply-chain-reader.ts`、`draft.ts` 和 `operational-opening.ts` 共同建立跨系统观察边界；`output-guardrail.ts` 与 `proposal-store.ts` 将事实校验和执行权留在循环外。
-- 履约模块包含 153 项回归断言，并在 CI 中复放全新安装与增量更新的真实 Postgres 容器基线。
+- 履约回归按 `portfolio:test` 的静态调用点统计为 104 项：履约与护栏 69 项、操作事实桥 4 项、Pi runtime 31 项；跨进程 E2E/smoke 单独列出，详见 [CRM 回归清单](docs/eval/crm-regression-manifest.md)。CI 继续复放全新安装与增量更新的真实 Postgres 容器基线。
 
 ## 3. 工作台界面截图
 

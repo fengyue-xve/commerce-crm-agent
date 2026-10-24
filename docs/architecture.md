@@ -60,9 +60,12 @@ available to this harness.
 The module tests cover evidence parsing, stale and partial reads, provider
 compatibility, multi-step observations, output violations, correction fallback,
 proposal persistence, approval and compensation conflicts. The portfolio
-commands additionally run browser and persistence smoke tests. The repository's
-CI executes the 153-item fulfillment regression set together with the real
-Postgres container jobs for tenant and schema invariants.
+commands additionally run browser and persistence smoke tests. The current
+`portfolio:test` source scope contains 104 static `it/test` call sites: 69 in
+fulfillment and guardrails, 4 in the operational opening bridge, and 31 in the
+Pi runtime. The file-level breakdown and separate cross-process checks are in
+[the CRM regression manifest](eval/crm-regression-manifest.md). The repository's
+CI also runs the real Postgres container jobs for tenant and schema invariants.
 
 See [CORE_MODULES.md](../CORE_MODULES.md) for the upstream/extension boundary
 and the source-to-resume claim map.
