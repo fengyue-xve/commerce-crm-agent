@@ -104,6 +104,8 @@ export interface BotContext {
     locale: string | null;
   };
   retrieved_chunks: RagHit[];
+  retrieval_status?: "ready" | "empty" | "unavailable";
+  retrieval_error?: string;
 }
 
 export interface BotResponse {

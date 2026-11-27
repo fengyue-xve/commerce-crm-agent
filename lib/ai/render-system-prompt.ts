@@ -43,6 +43,8 @@ function formatRecentMessages(ctx: BotContext): string {
 }
 
 function formatRetrievedChunks(ctx: BotContext): string {
+  if (ctx.retrieval_status === "unavailable")
+    return `(base de conhecimento indisponível: ${ctx.retrieval_error ?? "erro não especificado"})`;
   if (!ctx.retrieved_chunks.length) return "(sem trechos relevantes na base de conhecimento)";
   return ctx.retrieved_chunks
     .map((c, i) => {

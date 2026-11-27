@@ -25,6 +25,15 @@ function numeral(value: string): number {
   return result + current;
 }
 
+function isNeutralShippingQuestion(clause: string): boolean {
+  const text = clause.trim();
+  const chineseYesNo = /^(?:(?:请问|方便确认)\s*)?(?:已经|已|(?:今天|明天|后天|今日|明日)?(?:是否)?(?:可以|能够|能)(?:安排)?)(?:发货|出库|送达|到货|揽收)(?:了)?[吗么]\s*[?？]?$/u;
+  const chineseQuestion = /^(?:请问\s*)?(?:(?:什么时候|何时)(?:可以|能够|能)?(?:安排)?|(?:今天|明天|后天|今日|明日)?(?:是否|能否|可否)(?:已经|已|安排)?)(?:发货|出库|送达|到货|揽收)(?:了)?\s*[?？]?$/u;
+  const englishRequest = /^(?:can|could|will)\s+(?:you|we|they|it|the order)\s+(?:ship|deliver|dispatch|send)(?:\s+(?:it|the order|the shipment))?(?:\s+(?:today|tomorrow))?\s*[?？]$/i;
+  const englishStatus = /^(?:has|have)\s+(?:you|they|it|the order)\s+(?:already\s+)?(?:shipped|delivered|dispatched|sent)(?:\s+(?:it|the order|the shipment))?\s*[?？]$/i;
+  return chineseYesNo.test(text) || chineseQuestion.test(text) || englishRequest.test(text) || englishStatus.test(text);
+}
+
 /** Conservative deterministic checks, not a claim of universal natural-language verification. */
 export function guardCustomerOutput(
   candidate: unknown,
@@ -43,12 +52,13 @@ export function guardCustomerOutput(
       violations.push(`unsupported_${claim.kind}_quantity:${claim.quantity}`);
   }
   // Check each clause: a disclaimer in a different clause never licenses a promise.
-  const clauses = output.reply.split(/[，,。.!！?？;；\n]|但是|不过|然而|\bbut\b|\bhowever\b|但/i);
+  const clauses = output.reply.split(/(?<=[?？])|[，,。.!！;；\n]|但是|不过|然而|\bbut\b|\bhowever\b|但/i);
   for (const clause of clauses) {
+    const shippingQuestion = isNeutralShippingQuestion(clause);
     const promises = /(?:保证|承诺|确保|一定|肯定|可以|能够|将会|会在|已经|已于|预计)[^，。;；\n]{0,18}(?:发货|出库|送达|到货|揽收)|(?:今天|明天|后天|今日|明日|周[一二三四五六日天]|星期[一二三四五六日天]|\d+\s*(?:天|小时|个工作日)内|\d+月\d+日)[^，。;；\n]{0,12}(?:发货|出库|送达)|已(?:经)?(?:发货|出库|揽收|发送)|可(?:立即|直接)?发货|(?:可分配|可发|能发)\s*(?:\d+|[一二三四五六七八九十]+)?\s*(?:件|个|箱|库存|货)|\b(?:will|guarantee[ds]?|definitely|already|can)\b.{0,30}\b(?:ship|shipped|deliver|dispatched|sent)\b/gi;
     for (const match of clause.matchAll(promises)) {
       const prefix = clause.slice(Math.max(0, match.index! - 12), match.index);
-      if (!/(?:不能|无法|不予|不作|不代表|不等于|尚未|未能|未|不|不是|并非|cannot|can't|not|never)[^，。;；\n]{0,8}$/i.test(prefix))
+      if (!shippingQuestion && !/(?:不能|无法|不予|不作|不代表|不等于|尚未|未能|未|不|不是|并非|cannot|can't|not|never)[^，。;；\n]{0,8}$/i.test(prefix))
         violations.push("shipment_promise_forbidden");
     }
     const quantityPattern = /([-−]?\s*(?:[0-9]+|[零〇一二两三四五六七八九十百千万]+))\s*(件|个|箱|boxes?\b|units?\b|items?\b)/gi;
@@ -68,7 +78,17 @@ export function guardCustomerOutput(
   return { ok: violations.length === 0, violations: [...new Set(violations)], output };
 }
 
+export type CustomerOutputParseResult =
+  | { ok: true; value: unknown }
+  | { ok: false; error: "invalid_json" };
+
+export function parseCustomerOutputResult(text: string): CustomerOutputParseResult {
+  try { return { ok: true, value: JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")) }; }
+  catch { return { ok: false, error: "invalid_json" }; }
+}
+
+/** Compatibility helper for callers that only need the parsed value. */
 export function parseCustomerOutput(text: string): unknown {
-  try { return JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")); }
-  catch { return null; }
+  const result = parseCustomerOutputResult(text);
+  return result.ok ? result.value : null;
 }

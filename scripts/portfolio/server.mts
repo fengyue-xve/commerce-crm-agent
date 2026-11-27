@@ -26,7 +26,32 @@ const config = z
   .parse(JSON.parse(await readFile(resolve(root, configPath), "utf8")));
 const reader = new SupplyChainReader({ ...config.supply, organizationId: config.organizationId });
 const origin = `http://127.0.0.1:${config.port}`;
-const agentConfig = loadAgentConfig();
+const demoMode = process.argv.includes("--demo");
+if (demoMode && process.argv.includes("--live")) throw new Error("请选择 --demo 或 --live。");
+const settings = {
+  portfolio_llm_engine_required: "请设置 PORTFOLIO_LLM_ENGINE 为 openai、deepseek 或 openai-compatible。",
+  portfolio_llm_key_required: "请设置 PORTFOLIO_LLM_API_KEY。",
+  portfolio_compatible_url_required: "请设置 PORTFOLIO_LLM_BASE_URL。",
+  portfolio_llm_origin_invalid: "请为 PORTFOLIO_LLM_BASE_URL 填写有效的服务地址。",
+};
+function configureAgent() {
+  if (demoMode) return loadAgentConfig({ PORTFOLIO_LLM_ENGINE: "faux" });
+  try {
+    const runtimeConfig = loadAgentConfig();
+    if (runtimeConfig.engine !== "faux") return runtimeConfig;
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    const message = Object.hasOwn(settings, code) ? settings[code as keyof typeof settings] : "请检查 PORTFOLIO_LLM_ENGINE 和 PORTFOLIO_LLM_BASE_URL。";
+    throw new Error(message);
+  }
+  throw new Error("使用脚本模型请以 --demo 启动。");
+}
+const agentConfig = configureAgent();
+const runErrors = {
+  portfolio_model_timeout: "模型响应超时，请重试核对。",
+  portfolio_model_unavailable: "模型服务暂不可用，请检查模型配置后重试核对。",
+  portfolio_source_unavailable: "库存数据暂不可用，请检查供应链服务后重试核对。",
+};
 const store = new ProposalStore(resolve(root, "output/portfolio/agent-state.json"), config.organizationId);
 let active = false;
 const postSchema = z.strictObject({
@@ -55,6 +80,7 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" && path === "/api/health") {
       json(200, {
         status: "ok",
+        mode: demoMode ? "demo" : "live",
         provider: agentConfig.engine === "faux" ? "official-pi-faux" : agentConfig.engine,
         scope: "isolated-synthetic-demo",
         sendsAvailable: false,
@@ -126,6 +152,11 @@ const server = createServer(async (req, res) => {
           reader: (sku, org, section) => reader.read(sku, org, [section]),
           config: agentConfig,
         });
+        if (draft.status === "failed") {
+          const error = draft.error ?? "portfolio_model_unavailable";
+          json(503, { error, status: draft.status, message: runErrors[error] });
+          return;
+        }
         // Persistence and every business mutation happen only after the model loop exits.
         const proposals = await store.recordDraft(draft, opportunity.version, before.generation);
         json(200, { ...draft, proposals, demoPersisted: true });
@@ -163,17 +194,17 @@ const server = createServer(async (req, res) => {
   } catch (error) {
     if (error instanceof ProposalConflict) { json(409, { error: error.code }); return; }
     // Return a bounded code, never provider context, credentials or upstream bodies.
-    process.stderr.write(`Demo request failed: ${error instanceof Error ? error.name : "Error"}\n`);
+    process.stderr.write(`Fulfillment request failed: ${error instanceof Error ? error.name : "Error"}\n`);
     if (!res.headersSent)
       json(503, {
         error: "demo_unavailable",
-        message: "请检查供应链服务和本地运行日志；没有发送客户消息。",
+        message: "履约服务暂不可用，请检查本地运行日志后重试。",
       });
     else res.end();
   }
 });
 server.listen(config.port, "127.0.0.1", () =>
   process.stdout.write(
-    `Isolated fulfillment demo: ${origin}; Pi engine=${agentConfig.engine}; durable proposals; no customer sending.\n`,
+    `Fulfillment ${demoMode ? "demo" : "live"} at ${origin} (${agentConfig.engine})\n`,
   ),
 );

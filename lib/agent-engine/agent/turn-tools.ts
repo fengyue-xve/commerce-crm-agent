@@ -368,6 +368,19 @@ export async function buildTurnTools(
           },
           { log: runLog, embed: deps.embed },
         );
+        if (preview?.kind === 'sandbox') {
+          preview.result.impediments = preview.result.impediments.filter(
+            ({ code }) => code !== 'knowledge_unavailable' && code !== 'knowledge_sem_chave',
+          );
+          if (!out.ok) {
+            preview.result.impediments.push({
+              code: out.error.code,
+              message: out.error.code === 'knowledge_sem_chave'
+                ? 'Configure uma chave de IA para consultar a base de conhecimento.'
+                : 'A base de conhecimento está indisponível. Tente a consulta novamente.',
+            });
+          }
+        }
         if (out.ok && out.results.length > 0) {
           // As citações são montadas AQUI, pelo código, a partir do resultado
           // cru — é por isso que os ids podem sair do que vai ao modelo sem
@@ -378,7 +391,8 @@ export async function buildTurnTools(
         // busca com RAG — dois UUIDs por resultado, sem uso nenhum do lado dele
         // (nenhuma ferramenta os aceita como argumento). UUID cru na resposta ao
         // cliente foi MEDIDO nesta base; esta era uma fonte silenciosa dele.
-        return turnoProjeta(mcpToolIdsDoTurno) ? projetarRetornoDeTool(out) : out;
+        // As falhas de searchKnowledge já têm código e mensagem públicos.
+        return out.ok && turnoProjeta(mcpToolIdsDoTurno) ? projetarRetornoDeTool(out) : out;
       },
     }),
     send_message: tool({

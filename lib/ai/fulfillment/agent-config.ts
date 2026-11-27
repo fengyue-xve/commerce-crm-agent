@@ -6,8 +6,10 @@ export interface AgentConfig { engine: AgentEngine; binding: RuntimeModelBinding
 
 /** Server environment only. This module never reads files or returns keys to the UI. */
 export function loadAgentConfig(environment: Readonly<Record<string, string | undefined>> = process.env): AgentConfig {
+  const configuredEngine = environment.PORTFOLIO_LLM_ENGINE?.trim();
+  if (!configuredEngine) throw new Error("portfolio_llm_engine_required");
   const engine = z.enum(["faux", "openai", "deepseek", "openai-compatible"])
-    .parse(environment.PORTFOLIO_LLM_ENGINE ?? "faux");
+    .parse(configuredEngine);
   if (engine === "faux") return { engine, binding: { provider: "portfolio-faux", model: "fulfillment-scripted", apiKey: "synthetic-no-network" } };
   const apiKey = environment.PORTFOLIO_LLM_API_KEY;
   if (!apiKey?.trim()) throw new Error("portfolio_llm_key_required");

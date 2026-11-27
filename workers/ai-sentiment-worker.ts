@@ -88,6 +88,7 @@ const sentimentSchema = z.object({
 export interface SentimentResult {
   skipped: boolean;
   reason?: string;
+  error?: string;
   sentiment_score?: number;
 }
 
@@ -309,6 +310,6 @@ export async function processSentiment(event: EventRow): Promise<SentimentResult
       event_id: event.id,
       error: err instanceof Error ? err.message : String(err),
     });
-    return { skipped: true, reason: "classify_failed" };
+    return { skipped: true, reason: "classify_failed", error: err instanceof Error ? err.message : "unknown_error" };
   }
 }

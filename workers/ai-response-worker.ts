@@ -743,14 +743,14 @@ async function buildContext(input: BuildContextInput): Promise<GuardDecision> {
     .limit(RECENT_MESSAGES_LIMIT);
   const recent_messages: RecentMessage[] = ((recents ?? []) as RecentMessage[]).slice().reverse();
 
-  // RAG best-effort: lista vazia quando não há material ou não há chave.
-  const retrieved_chunks = elegivelParaWorkerLegado(agent)
+  // An empty result means no material matched. A failed retrieval remains visible.
+  const retrieval = elegivelParaWorkerLegado(agent)
     ? await retrieveContext({
         organizationId: input.organizationId,
         kbVersionId: agent.active_kb_version_id ?? null,
         query: inbound_body,
       })
-    : [];
+    : { chunks: [], status: "empty" as const };
 
   return {
     kind: "proceed",
@@ -780,7 +780,9 @@ async function buildContext(input: BuildContextInput): Promise<GuardDecision> {
         display_name: c.contacts.display_name,
         locale: c.contacts.locale,
       },
-      retrieved_chunks,
+      retrieved_chunks: retrieval.chunks,
+      retrieval_status: retrieval.status,
+      retrieval_error: retrieval.error,
     },
   };
 }
@@ -824,6 +826,12 @@ interface RetrieveInput {
   query: string;
 }
 
+type RetrievalResult = {
+  chunks: RagHit[];
+  status: "ready" | "empty" | "unavailable";
+  error?: string;
+};
+
 /**
  * Este caminho só roda em organização SEM agente publicado (o engine é dono da
  * resposta quando há um). Como não há versão publicada, não há
@@ -831,7 +839,7 @@ interface RetrieveInput {
  * o comportamento que este worker sempre teve — antes por acidente (a KB do
  * agente default), agora por escrito.
  */
-async function retrieveContext(input: RetrieveInput): Promise<RagHit[]> {
+async function retrieveContext(input: RetrieveInput): Promise<RetrievalResult> {
   const admin = createAdminClient();
 
   const { data: fontesRows } = await admin
@@ -843,7 +851,7 @@ async function retrieveContext(input: RetrieveInput): Promise<RagHit[]> {
     .not("active_kb_version_id", "is", null);
   const fontes = ((fontesRows ?? []) as Array<{ id: string }>).map((f) => f.id);
 
-  if (fontes.length === 0 && !input.kbVersionId) return [];
+  if (fontes.length === 0 && !input.kbVersionId) return { chunks: [], status: "empty" };
 
   let embedding: number[];
   try {
@@ -857,7 +865,7 @@ async function retrieveContext(input: RetrieveInput): Promise<RagHit[]> {
       error: err instanceof Error ? err.message : String(err),
       organization_id: input.organizationId,
     });
-    return [];
+    return { chunks: [], status: "unavailable", error: "embedding_unavailable" };
   }
 
   const { data, error } =
@@ -889,7 +897,7 @@ async function retrieveContext(input: RetrieveInput): Promise<RagHit[]> {
       error: error.message,
       organization_id: input.organizationId,
     });
-    return [];
+    return { chunks: [], status: "unavailable", error: "retrieval_rpc_failed" };
   }
   type RpcRow = {
     chunk_id: string;
@@ -898,13 +906,14 @@ async function retrieveContext(input: RetrieveInput): Promise<RagHit[]> {
     similarity: number;
     metadata: Record<string, unknown> | null;
   };
-  return ((data ?? []) as RpcRow[]).map((r) => ({
+  const chunks = ((data ?? []) as RpcRow[]).map((r) => ({
     chunk_id: r.chunk_id,
     knowledge_source_id: r.knowledge_source_id,
     content: r.content,
     similarity: r.similarity,
     metadata: r.metadata ?? {},
   }));
+  return { chunks, status: chunks.length > 0 ? "ready" : "empty" };
 }
 
 // ---------------------------------------------------------------------------

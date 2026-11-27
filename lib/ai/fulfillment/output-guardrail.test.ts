@@ -12,6 +12,12 @@ describe("customer output guardrail", () => {
   it.each(["保证明天发货", "明天发货", "已经发货", "预计今天发货", "We will ship tomorrow", "不能承诺，但是明天发货", "不能承诺，但已经发货", "周五发货", "48小时内出库", "可发18件", "已经出库"])("blocks shipping assertion %s", (reply) => {
     expect(guardCustomerOutput({ reply, claims: [] }, report).violations).toContain("shipment_promise_forbidden");
   });
+  it.each(["可以安排发货吗？", "方便确认是否可以安排发货吗？", "已经发货了吗？", "请问明天可以发货吗？", "什么时候可以安排发货？", "Can you ship tomorrow?", "Has it already shipped?"])("accepts a neutral shipping question %s", (reply) => {
+    expect(guardCustomerOutput({ reply, claims: [] }, report).ok).toBe(true);
+  });
+  it.each(["已经发货了吗？我们保证明天发货。", "明天发货，您看可以吗？", "We can ship tomorrow?", "Can you ship tomorrow? We will ship tomorrow."])("blocks a shipping assertion alongside a question %s", (reply) => {
+    expect(guardCustomerOutput({ reply, claims: [] }, report).violations).toContain("shipment_promise_forbidden");
+  });
   it.each(["库存999件", "库存为999", "stock 999 units", "库存十九件", "库存-18件", "stock -18 units", "库存−18件"])("blocks invented quantity %s", (reply) => {
     expect(guardCustomerOutput({ reply, claims: [{ kind: "stock", quantity: 18 }] }, report).ok).toBe(false);
   });

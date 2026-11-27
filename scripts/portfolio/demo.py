@@ -34,7 +34,7 @@ def start():
         if sock.connect_ex(('127.0.0.1',15273))==0:raise RuntimeError('Port 15273 occupied; no process started')
     RUNTIME.mkdir(parents=True,exist_ok=True)
     with (RUNTIME/'server.log').open('wb') as log:
-        proc=subprocess.Popen([shutil.which('node') or 'node','node_modules/tsx/dist/cli.mjs','scripts/portfolio/server.mts'],cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,creationflags=HIDDEN)
+        proc=subprocess.Popen([shutil.which('node') or 'node','node_modules/tsx/dist/cli.mjs','scripts/portfolio/server.mts','--demo'],cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,creationflags=HIDDEN)
     identity=fingerprint(proc.pid)
     if not identity:raise RuntimeError('Could not record process identity')
     STATE.write_text(json.dumps({'pid':proc.pid,'fingerprint':identity}),encoding='utf-8')

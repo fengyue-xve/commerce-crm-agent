@@ -10,7 +10,7 @@ function receipt(): ReadReceipt {
     stock: { sku: "AUD-001", quantity: 18, snapshot_date: "2026-09-03" }, replenishment: { sku: "AUD-001", suggested_qty: 72, assessment_status: "ready" },
     preparation: { sku: "AUD-001", record_id: "R-1001", business_version: 1, outer_box_mark_present: true }, purchases: [] }, receivedAt: now.toISOString(), failures: [], requests: [] };
 }
-const base = { organizationId: "demo-org", sku: "AUD-001", mode: "historical_replay" as const, now, config: loadAgentConfig({}) };
+const base = { organizationId: "demo-org", sku: "AUD-001", mode: "historical_replay" as const, now, config: loadAgentConfig({ PORTFOLIO_LLM_ENGINE: "faux" }) };
 
 describe("multi-step fulfillment agent", () => {
   it("runs actual Pi Faux across three separate reads and only proposes writes", async () => {
@@ -56,8 +56,45 @@ describe("multi-step fulfillment agent", () => {
     const result = await generateAgentDraft({ ...base, runtime, reader: async () => receipt() });
     expect(result.guardrail.status).toBe("fallback"); expect(result.assessment.facts.stock).toBeNull(); expect(result.proposedActions).toEqual([]);
   });
+  it("returns an explicit failure instead of a customer draft when runtime execution fails", async () => {
+    const runtime = { run: async () => { throw new Error("provider_unavailable"); } } as unknown as AgentRuntime;
+    const result = await generateAgentDraft({ ...base, runtime, reader: async () => receipt() });
+    expect(result.status).toBe("failed");
+    expect(result.error).toBe("portfolio_model_unavailable");
+    expect(result.draft).toBe("");
+    expect(result.guardrail.status).toBe("error");
+    expect(result.proposedActions).toEqual([]);
+  });
+  it("reports a Pi error turn before entering output correction", async () => {
+    let turns = 0;
+    const runtime = { run: async () => {
+      turns++;
+      return { finalText: "", events: [{ type: "turn_end", data: { stop_reason: "error" } }], toolCalls: [] };
+    } } as unknown as AgentRuntime;
+    const result = await generateAgentDraft({ ...base, runtime, reader: async () => receipt() });
+    expect(result).toMatchObject({ status: "failed", error: "portfolio_model_unavailable", draft: "" });
+    expect(turns).toBe(1);
+  });
+  it("reports timeout as a retryable failure", async () => {
+    const signal = AbortSignal.abort(new DOMException("deadline", "TimeoutError"));
+    const result = await generateAgentDraft({ ...base, signal, reader: async () => receipt() });
+    expect(result).toMatchObject({ status: "failed", error: "portfolio_model_timeout", draft: "" });
+  });
+  it("reports HTTP stock service failure without creating a customer draft", async () => {
+    const result = await generateAgentDraft({ ...base, reader: async (_sku, _org, section) => {
+      const data = receipt();
+      if (section === "stock") {
+        data.evidence.stock = null;
+        data.failures = ["stock_unavailable"];
+        data.requests = [{ method: "POST", path: "/api/agent/tools/query-stock-level", status: 503 }];
+      }
+      return data;
+    } });
+    expect(result).toMatchObject({ status: "failed", error: "portfolio_source_unavailable", draft: "", proposedActions: [] });
+  });
   it("keeps real mode opt-in and rejects absent keys or credential-bearing URLs", () => {
-    expect(loadAgentConfig({}).engine).toBe("faux");
+    expect(() => loadAgentConfig({})).toThrow("engine_required");
+    expect(loadAgentConfig({ PORTFOLIO_LLM_ENGINE: "faux" }).engine).toBe("faux");
     expect(() => loadAgentConfig({ PORTFOLIO_LLM_ENGINE: "openai" })).toThrow("key_required");
     expect(() => loadAgentConfig({ PORTFOLIO_LLM_ENGINE: "deepseek", PORTFOLIO_LLM_API_KEY: "synthetic", PORTFOLIO_LLM_BASE_URL: "https://user:password@example.invalid" })).toThrow("origin_invalid");
     expect(loadAgentConfig({ PORTFOLIO_LLM_ENGINE: "openai-compatible", PORTFOLIO_LLM_API_KEY: "synthetic", PORTFOLIO_LLM_BASE_URL: "http://127.0.0.1:19999/v1" }).binding.provider).toBe("deepseek");

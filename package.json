@@ -43,8 +43,9 @@
     "worker": "tsx --env-file=.env --env-file=.env.local workers/agent-worker/main.ts",
     "dev:crons": "tsx --env-file=.env --env-file=.env.local scripts/dev-crons.ts",
     "flywheel:judge": "tsx --env-file=.env --env-file=.env.local scripts/flywheel-judge-live.ts",
-    "portfolio:demo": "tsx scripts/portfolio/server.mts",
-    "portfolio:test": "vitest run lib/ai/fulfillment lib/agent-engine/agent/operational-opening.test.ts lib/agent-runtime/pi/native-import.test.ts lib/agent-runtime/pi/runtime.test.ts lib/agent-runtime/pi/resumed-workbench-turn.test.ts",
+    "portfolio:demo": "tsx scripts/portfolio/server.mts --demo",
+    "portfolio:live": "tsx scripts/portfolio/server.mts --live",
+    "portfolio:test": "vitest run lib/ai/fulfillment lib/agent-engine/agent/operational-opening.test.ts lib/agent-engine/agent/turn-tools-knowledge.test.ts lib/agent-runtime/pi/native-import.test.ts lib/agent-runtime/pi/runtime.test.ts lib/agent-runtime/pi/resumed-workbench-turn.test.ts",
     "portfolio:typecheck": "tsc --noEmit -p tsconfig.portfolio.json"
   },
   "dependencies": {

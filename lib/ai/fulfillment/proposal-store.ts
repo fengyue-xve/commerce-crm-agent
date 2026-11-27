@@ -62,6 +62,7 @@ export class ProposalStore {
   snapshot() { return this.transaction((state) => state); }
   recordDraft(draft: AgentDraftResult, expectedVersion: number, expectedGeneration: number) {
     return this.transaction((state) => {
+      if (draft.status === "failed") throw new ProposalConflict("draft_generation_failed");
       if (state.generation !== expectedGeneration) throw new ProposalConflict("demo_generation_changed");
       if (state.drafts.some((row) => row.id === draft.id)) return state.proposals.filter((row) => row.draftId === draft.id);
       if (state.drafts.length >= 100 || state.proposals.length + draft.proposedActions.length > 500) throw new ProposalConflict("demo_capacity_reset_required");
