@@ -25,7 +25,7 @@ flowchart LR
 - 履约 Agent 的读工具读取事实，写入和外发工具仅生成提案。人工确认后可修改演示商机阶段或标签，可按业务版本补偿撤销。外发提案保留 `canSend=false`，人工批准用于记录审核结果。
 - 独立演示的 `ProposalStore` 在本机 JSON 文件中保存草稿、提案和审计，用文件锁、原子替换和版本检查保持一致性。全量 CRM 底座通过 PostgreSQL、组织范围和 RLS 管理租户数据。
 - `evidence.ts`、`supply-chain-reader.ts` 和 `draft.ts` 构建履约事实与草稿。`operational-opening.ts` 向全量 CRM 的可选路径注入核验结果。`output-guardrail.ts` 校验草稿，`proposal-store.ts` 在 Agent 循环之外处理人工决策。
-- 用 `portfolio:test` 运行履约、事实桥和 Pi 运行时回归。浏览器、跨进程持久化和真实模型 smoke 分别运行。[回归清单](docs/eval/crm-regression-manifest.md)保留原始统计口径，当前通过数以本次命令输出为准。
+- `portfolio:test` 运行履约、事实桥、知识库提示和 Pi 运行时测试。浏览器、跨进程持久化和真实模型 smoke 由独立脚本验证；[回归清单](docs/eval/crm-regression-manifest.md)列出各命令和覆盖范围。
 
 ## 3. 工作台界面截图
 
